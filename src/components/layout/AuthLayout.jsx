@@ -53,26 +53,29 @@ const AuthLayout = ({ children, illustration: Illustration }) => {
                 <div className="absolute inset-0 bg-grid mask-radial opacity-30 shadow-inner" />
             </div>
 
-            <div className="container relative z-10 mx-auto px-4 py-8 flex items-center justify-center min-h-screen">
-                <div className="flex flex-col lg:flex-row items-center justify-center gap-16 lg:gap-24 w-full max-w-7xl">
+            <div className="relative z-10 w-full mx-auto px-6 lg:px-12 py-8 flex items-center justify-center min-h-screen">
+                <div className="flex flex-col lg:flex-row items-center justify-between gap-10 w-full max-w-6xl">
                     {/* Left Side: Hero content (Desktop) */}
-                    <div className="hidden lg:flex flex-col flex-1 space-y-10">
+                    <div className="hidden lg:flex flex-col flex-1 space-y-8 min-w-0">
                         <motion.div
                             initial={{ opacity: 0, x: -30 }}
                             animate={{ opacity: 1, x: 0 }}
                             transition={{ duration: 0.6 }}
                         >
-                            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-teal-500/10 border border-teal-500/20 text-teal-400 text-xs font-bold tracking-widest uppercase mb-8 backdrop-blur-md">
+                            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-teal-500/10 border border-teal-500/20 text-teal-400 text-xs font-bold tracking-widest uppercase mb-6 backdrop-blur-md">
                                 <span className="relative flex h-2 w-2">
                                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-teal-400 opacity-75"></span>
                                     <span className="relative inline-flex rounded-full h-2 w-2 bg-teal-400"></span>
                                 </span>
-                                VoiceCast AI ENGINE
+                                VoiceCast AI
                             </div>
-                            <h2 className="text-6xl lg:text-7xl font-extrabold text-white leading-[1.1] tracking-tight">
-                                Transform Blogs into <span className="bg-gradient-to-r from-teal-400 to-violet-400 bg-clip-text text-transparent">Podcasts</span>
+                            <h2 className="text-4xl xl:text-5xl font-extrabold text-white leading-[1.15] tracking-tight">
+                                Transform Blogs into{' '}
+                                <span className="bg-gradient-to-r from-teal-400 to-violet-400 bg-clip-text text-transparent">
+                                    Podcasts
+                                </span>
                             </h2>
-                            <p className="text-slate-400 text-xl max-w-lg mt-8 leading-relaxed">
+                            <p className="text-slate-400 text-base max-w-md mt-5 leading-relaxed">
                                 Your content deserves to be heard. Use AI to generate scripts, studio-quality voices, and 3D avatars in minutes.
                             </p>
                         </motion.div>
@@ -90,7 +93,7 @@ const AuthLayout = ({ children, illustration: Illustration }) => {
                     </div>
 
                     {/* Right Side: Form content */}
-                    <div className="w-full flex justify-center lg:flex-none">
+                    <div className="w-full lg:w-auto flex justify-center">
                         {children}
                     </div>
                 </div>

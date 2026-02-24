@@ -9,7 +9,7 @@ const AuthCard = ({ children, className, title, subtitle }) => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
             className={twMerge(
-                'relative p-[1px] rounded-3xl overflow-hidden group',
+                'relative p-[1px] rounded-3xl overflow-hidden group w-full max-w-md',
                 className
             )}
         >
