@@ -9,30 +9,38 @@ const AuthCard = ({ children, className, title, subtitle }) => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
             className={twMerge(
-                'glass rounded-2xl p-8 w-full max-w-md glow-purple relative overflow-hidden',
+                'relative p-[1px] rounded-3xl overflow-hidden group',
                 className
             )}
         >
-            {/* Decorative Blur Object */}
-            <div className="absolute -top-24 -right-24 w-48 h-48 bg-violet-600/20 blur-[80px] rounded-full" />
-            <div className="absolute -bottom-24 -left-24 w-48 h-48 bg-teal-500/20 blur-[80px] rounded-full" />
+            {/* Animated Border Gradient */}
+            <div className="absolute inset-0 bg-gradient-to-r from-teal-500/50 via-violet-500/50 to-teal-500/50 animate-gradient-xy opacity-40 group-hover:opacity-100 transition-opacity duration-500" />
 
-            <div className="relative z-10">
-                {(title || subtitle) && (
-                    <div className="mb-8 text-center">
-                        {title && (
-                            <h1 className="text-3xl font-bold bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent mb-2">
-                                {title}
-                            </h1>
-                        )}
-                        {subtitle && (
-                            <p className="text-slate-400 text-sm">
-                                {subtitle}
-                            </p>
-                        )}
-                    </div>
-                )}
-                {children}
+            <div className={twMerge(
+                'relative bg-[#020617]/80 backdrop-blur-2xl rounded-[calc(1.5rem-1px)] p-8 w-full glow-purple overflow-hidden flex flex-col',
+                'border border-white/5'
+            )}>
+                {/* Decorative Blur Objects */}
+                <div className="absolute -top-24 -right-24 w-48 h-48 bg-violet-600/10 blur-[80px] rounded-full" />
+                <div className="absolute -bottom-24 -left-24 w-48 h-48 bg-teal-500/10 blur-[80px] rounded-full" />
+
+                <div className="relative z-10">
+                    {(title || subtitle) && (
+                        <div className="mb-10 text-center">
+                            {title && (
+                                <h1 className="text-4xl font-black bg-gradient-to-br from-white via-white/90 to-slate-500 bg-clip-text text-transparent mb-3 tracking-tight">
+                                    {title}
+                                </h1>
+                            )}
+                            {subtitle && (
+                                <p className="text-slate-400 text-base font-medium">
+                                    {subtitle}
+                                </p>
+                            )}
+                        </div>
+                    )}
+                    {children}
+                </div>
             </div>
         </motion.div>
     );

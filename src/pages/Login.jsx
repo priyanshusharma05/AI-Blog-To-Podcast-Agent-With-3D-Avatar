@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { Mail, Lock, LogIn, Github } from 'lucide-react';
 import AuthLayout from '../components/layout/AuthLayout';
 import AuthCard from '../components/auth/AuthCard';
@@ -17,30 +18,73 @@ const Login = () => {
     };
 
     const Illustration = () => (
-        <div className="relative w-full h-[400px] flex items-center justify-center">
-            <div className="absolute inset-0 bg-teal-500/5 blur-3xl rounded-full" />
-            <div className="relative z-10 w-full max-w-md p-8 glass rounded-3xl glow-teal flex flex-col items-center justify-center space-y-6">
-                <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-teal-500 to-violet-500 flex items-center justify-center animate-bounce-slow">
-                    <Mail className="text-white w-12 h-12" />
+        <div className="relative w-full h-[500px] flex items-center justify-center">
+            {/* Main Ambient Glow */}
+            <div className="absolute inset-0 bg-teal-500/10 blur-[120px] rounded-full animate-pulse" />
+
+            <div className="relative z-10 w-full max-w-lg p-12 glass rounded-[3rem] glow-teal flex flex-col items-center justify-center space-y-10 border border-white/10 backdrop-blur-3xl">
+                {/* Central Mic Icon with Pulse */}
+                <div className="relative">
+                    <div className="absolute inset-0 bg-teal-500/30 blur-2xl rounded-full animate-ping" />
+                    <div className="relative w-28 h-28 rounded-3xl bg-gradient-to-br from-teal-400 to-violet-500 flex items-center justify-center shadow-2xl">
+                        <svg className="w-14 h-14 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-20a3 3 0 013 3v5a3 3 0 01-6 0V5a3 3 0 013-3z" />
+                        </svg>
+                    </div>
                 </div>
-                <div className="space-y-3 w-full">
-                    <div className="h-4 w-3/4 bg-slate-800 rounded-full animate-pulse" />
-                    <div className="h-4 w-1/2 bg-slate-800 rounded-full animate-pulse" />
-                    <div className="h-4 w-5/6 bg-slate-800 rounded-full animate-pulse" />
+
+                {/* Animated Waveforms */}
+                <div className="flex items-end justify-center gap-1.5 h-20 w-full px-4">
+                    {[0.6, 0.8, 0.5, 0.9, 0.7, 1.0, 0.8, 0.6, 0.9, 0.7].map((h, i) => (
+                        <motion.div
+                            key={i}
+                            animate={{
+                                height: [`${h * 40}%`, `${h * 100}%`, `${h * 40}%`],
+                            }}
+                            transition={{
+                                duration: 1.5 + i * 0.1,
+                                repeat: Infinity,
+                                ease: "easeInOut",
+                            }}
+                            className="w-2 rounded-full bg-gradient-to-t from-teal-500 to-violet-400 opacity-60"
+                        />
+                    ))}
                 </div>
-                <div className="flex gap-4 w-full">
-                    <div className="h-10 flex-1 bg-slate-800 rounded-lg animate-pulse" />
-                    <div className="h-10 w-10 bg-slate-800 rounded-lg animate-pulse" />
+
+                {/* Processing Indicators */}
+                <div className="grid grid-cols-2 gap-6 w-full">
+                    <div className="h-2.5 bg-slate-800/50 rounded-full overflow-hidden">
+                        <motion.div
+                            animate={{ x: ['-100%', '100%'] }}
+                            transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+                            className="h-full w-1/3 bg-teal-500/40"
+                        />
+                    </div>
+                    <div className="h-2.5 bg-slate-800/50 rounded-full overflow-hidden">
+                        <motion.div
+                            animate={{ x: ['-100%', '100%'] }}
+                            transition={{ duration: 4, repeat: Infinity, ease: "linear", delay: 1 }}
+                            className="h-full w-1/2 bg-violet-500/40"
+                        />
+                    </div>
                 </div>
             </div>
 
-            {/* Floating Elements */}
-            <div className="absolute top-10 right-10 w-12 h-12 glass rounded-xl flex items-center justify-center animate-bounce-slow" style={{ animationDelay: '1s' }}>
-                <div className="w-6 h-6 rounded-full bg-teal-500/40" />
-            </div>
-            <div className="absolute bottom-10 left-10 w-16 h-16 glass rounded-2xl flex items-center justify-center animate-bounce-slow" style={{ animationDelay: '2s' }}>
-                <div className="w-8 h-8 rounded-full bg-violet-500/40" />
-            </div>
+            {/* Floating Sound Particles */}
+            <motion.div
+                animate={{ y: [0, -20, 0], opacity: [0.2, 0.5, 0.2] }}
+                transition={{ duration: 3, repeat: Infinity }}
+                className="absolute top-10 right-20 w-12 h-12 rounded-2xl bg-teal-500/10 border border-teal-500/20 flex items-center justify-center backdrop-blur-md"
+            >
+                <div className="w-2 h-6 bg-teal-500/30 rounded-full" />
+            </motion.div>
+            <motion.div
+                animate={{ y: [0, 25, 0], opacity: [0.1, 0.4, 0.1] }}
+                transition={{ duration: 4, repeat: Infinity, delay: 0.5 }}
+                className="absolute bottom-10 left-20 w-16 h-16 rounded-3xl bg-violet-500/10 border border-violet-500/20 flex items-center justify-center backdrop-blur-md"
+            >
+                <div className="w-8 h-2 bg-violet-500/30 rounded-full" />
+            </motion.div>
         </div>
     );
 
@@ -50,17 +94,35 @@ const Login = () => {
                 title="Welcome Back"
                 subtitle="Sign in to your VoiceCast AI account"
             >
-                <form onSubmit={handleSubmit} className="space-y-5">
-                    <Input
-                        label="Email Address"
-                        type="email"
-                        placeholder="name@company.com"
-                        icon={Mail}
-                        required
-                        value={formData.email}
-                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    />
-                    <div className="space-y-1">
+                <motion.form
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.2 }}
+                    onSubmit={handleSubmit}
+                    className="space-y-6"
+                >
+                    <motion.div
+                        initial={{ opacity: 0, x: 10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 0.3 }}
+                    >
+                        <Input
+                            label="Email Address"
+                            type="email"
+                            placeholder="name@company.com"
+                            icon={Mail}
+                            required
+                            value={formData.email}
+                            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                        />
+                    </motion.div>
+
+                    <motion.div
+                        initial={{ opacity: 0, x: 10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 0.4 }}
+                        className="space-y-1"
+                    >
                         <Input
                             label="Password"
                             type="password"
@@ -71,42 +133,58 @@ const Login = () => {
                             onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                         />
                         <div className="flex justify-end">
-                            <a href="#" className="text-xs text-teal-500 hover:underline transition-all">
+                            <a href="#" className="text-sm text-teal-500 hover:text-teal-400 font-medium transition-all">
                                 Forgot password?
                             </a>
                         </div>
-                    </div>
+                    </motion.div>
 
-                    <div className="flex items-center gap-2">
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: 0.5 }}
+                        className="flex items-center gap-3"
+                    >
                         <input
                             type="checkbox"
                             id="remember"
-                            className="w-4 h-4 rounded border-white/10 bg-slate-900 text-teal-500 focus:ring-teal-500/20"
+                            className="w-5 h-5 rounded-lg border-white/10 bg-slate-900/50 text-teal-500 focus:ring-teal-500/20 transition-all cursor-pointer"
                         />
-                        <label htmlFor="remember" className="text-sm text-slate-400">Remember me</label>
-                    </div>
+                        <label htmlFor="remember" className="text-sm text-slate-400 cursor-pointer select-none">Remember for 30 days</label>
+                    </motion.div>
 
-                    <Button
-                        type="submit"
-                        className="w-full"
-                        loading={loading}
-                        icon={LogIn}
+                    <motion.div
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.6 }}
                     >
-                        Sign In
-                    </Button>
+                        <Button
+                            type="submit"
+                            className="w-full text-lg py-4 font-bold tracking-tight"
+                            loading={loading}
+                            icon={LogIn}
+                        >
+                            Sign In to Dashboard
+                        </Button>
+                    </motion.div>
 
                     <div className="relative my-8">
                         <div className="absolute inset-0 flex items-center">
                             <div className="w-full border-t border-white/5"></div>
                         </div>
-                        <div className="relative flex justify-center text-xs uppercase">
-                            <span className="bg-[#0f172a] px-2 text-slate-500">Or continue with</span>
+                        <div className="relative flex justify-center text-xs uppercase tracking-widest">
+                            <span className="bg-[#0f172a]/0 px-4 text-slate-500 backdrop-blur-sm">Secure Social Login</span>
                         </div>
                     </div>
 
-                    <div className="flex justify-center social-login">
-                        <Button variant="secondary" className="w-full">
-                            <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: 0.7 }}
+                        className="flex justify-center"
+                    >
+                        <Button variant="secondary" className="w-full py-3.5 border-white/5 hover:border-white/10 transition-all">
+                            <svg className="w-5 h-5 mr-3" viewBox="0 0 24 24">
                                 <path
                                     fill="currentColor"
                                     d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -124,15 +202,15 @@ const Login = () => {
                                     d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 12-4.53z"
                                 />
                             </svg>
-                            Google
+                            Continue with Google
                         </Button>
-                    </div>
-                </form>
+                    </motion.div>
+                </motion.form>
 
-                <p className="mt-8 text-center text-sm text-slate-400">
-                    Don't have an account?{' '}
-                    <Link to="/signup" className="text-teal-500 font-semibold hover:underline transition-all">
-                        Sign up for free
+                <p className="mt-10 text-center text-sm text-slate-500">
+                    New to VoiceCast?{' '}
+                    <Link to="/signup" className="text-teal-400 font-bold hover:text-teal-300 transition-all border-b border-teal-500/20 hover:border-teal-500">
+                        Create free account
                     </Link>
                 </p>
             </AuthCard>

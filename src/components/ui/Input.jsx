@@ -24,9 +24,10 @@ const Input = ({
                 )}
                 <input
                     className={twMerge(
-                        'w-full bg-slate-900/50 border border-white/10 rounded-lg px-4 py-3 placeholder:text-slate-600 focus:outline-none focus:border-teal-500/50 focus:ring-1 focus:ring-teal-500/20 transition-all duration-300 text-slate-200',
-                        Icon && 'pl-10',
-                        error && 'border-red-500/50 focus:border-red-500/50 focus:ring-red-500/20',
+                        'w-full bg-slate-900/40 border border-white/5 rounded-xl px-4 py-3.5 placeholder:text-slate-600 focus:outline-none focus:border-teal-500/40 focus:ring-4 focus:ring-teal-500/5 transition-all duration-300 text-slate-200 backdrop-blur-sm',
+                        'hover:border-white/10 focus:scale-[1.01]',
+                        Icon && 'pl-11',
+                        error && 'border-red-500/50 focus:border-red-500/50 focus:ring-red-500/10',
                         className
                     )}
                     {...props}
