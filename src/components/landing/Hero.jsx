@@ -5,7 +5,7 @@ import Button from '../ui/Button';
 
 const Hero = () => {
     return (
-        <section className="relative pt-40 pb-20 lg:pt-56 lg:pb-32 overflow-hidden bg-[#FDFCFB]">
+        <section className="relative pt-28 pb-20 lg:pt-44 lg:pb-32 overflow-hidden bg-[#FDFCFB]">
             {/* Unique Background Texture: Narrative Path */}
             <div className="absolute inset-0 -z-10 overflow-hidden">
                 <svg className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full opacity-[0.03] text-[#0D9488]" viewBox="0 0 100 100" preserveAspectRatio="none">
@@ -21,24 +21,42 @@ const Hero = () => {
                     {/* LEFT CONTENT: 60% */}
                     <div className="lg:col-span-7 text-left">
                         {/* Process Breadcrumb Indicator */}
+                        {/* Unified Process Ribbon */}
                         <motion.div
-                            initial={{ opacity: 0, x: -20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            className="flex items-center gap-3 mb-8"
+                            initial={{ opacity: 0, y: -20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="inline-flex items-center gap-6 p-2 mb-10 bg-white/40 backdrop-blur-md border border-slate-200/50 rounded-2xl shadow-sm relative overflow-hidden group"
                         >
-                            <div className="flex items-center gap-2 px-3 py-1 bg-white border border-slate-200 rounded-full shadow-sm">
-                                <FileText size={14} className="text-slate-400" />
-                                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-tighter">Blog</span>
+                            {/* Animated Background Flow */}
+                            <motion.div
+                                animate={{ x: ['-100%', '200%'] }}
+                                transition={{ repeat: Infinity, duration: 3, ease: 'linear' }}
+                                className="absolute inset-0 w-1/2 h-[1px] top-0 bg-gradient-to-r from-transparent via-[#0D9488]/30 to-transparent"
+                            />
+
+                            <div className="flex items-center gap-2 px-3 py-1.5 hover:bg-white/60 rounded-xl transition-colors cursor-default">
+                                <div className="w-6 h-6 rounded-lg bg-slate-100 flex items-center justify-center">
+                                    <FileText size={12} className="text-slate-500" />
+                                </div>
+                                <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Blog</span>
                             </div>
-                            <div className="h-px w-6 bg-slate-200" />
-                            <div className="flex items-center gap-2 px-3 py-1 bg-teal-50 border border-teal-200 rounded-full shadow-sm scale-110">
-                                <Cpu size={14} className="text-[#0D9488]" />
-                                <span className="text-[10px] font-black text-[#0D9488] uppercase tracking-tighter">AI Agent</span>
-                            </div>
-                            <div className="h-px w-6 bg-slate-200" />
-                            <div className="flex items-center gap-2 px-3 py-1 bg-white border border-slate-200 rounded-full shadow-sm">
-                                <Headphones size={14} className="text-slate-400" />
-                                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-tighter">Podcast</span>
+
+                            <motion.div
+                                animate={{ scale: [1, 1.1, 1] }}
+                                transition={{ repeat: Infinity, duration: 2 }}
+                                className="flex items-center gap-2 px-3 py-1.5 bg-white border border-[#0D9488]/20 rounded-xl shadow-sm"
+                            >
+                                <div className="w-6 h-6 rounded-lg bg-teal-50 flex items-center justify-center">
+                                    <Cpu size={12} className="text-[#0D9488]" />
+                                </div>
+                                <span className="text-[10px] font-black text-[#0D9488] uppercase tracking-widest">AI Nano</span>
+                            </motion.div>
+
+                            <div className="flex items-center gap-2 px-3 py-1.5 hover:bg-white/60 rounded-xl transition-colors cursor-default">
+                                <div className="w-6 h-6 rounded-lg bg-slate-100 flex items-center justify-center">
+                                    <Headphones size={12} className="text-slate-500" />
+                                </div>
+                                <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Cast</span>
                             </div>
                         </motion.div>
 
