@@ -97,8 +97,8 @@ const Signup = () => {
     return (
         <AuthLayout illustration={Illustration}>
             <AuthCard
-                title="Create Account"
-                subtitle="Start transforming your content today"
+                title="Create Your Account"
+                subtitle="Start converting blogs into podcasts today."
             >
                 <motion.form
                     initial={{ opacity: 0 }}
@@ -180,7 +180,7 @@ const Signup = () => {
                             loading={loading}
                             icon={UserPlus}
                         >
-                            Get Started Instantly
+                            Create Account
                         </Button>
                     </motion.div>
 
@@ -226,7 +226,7 @@ const Signup = () => {
                 <p className="mt-10 text-center text-sm text-slate-500">
                     Already have an account?{' '}
                     <Link to="/login" className="text-teal-400 font-bold hover:text-teal-300 transition-all border-b border-teal-500/20 hover:border-teal-500">
-                        Sign in instead
+                        Login
                     </Link>
                 </p>
             </AuthCard>

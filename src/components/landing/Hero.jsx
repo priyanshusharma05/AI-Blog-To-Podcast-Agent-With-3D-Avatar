@@ -1,124 +1,168 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { ArrowRight, Play, Star, CheckCircle2, ShieldCheck, Zap } from 'lucide-react';
+import { ArrowRight, Play, Mic, FileText, Cpu, Headphones, Sparkles, Zap, AudioLines } from 'lucide-react';
 import Button from '../ui/Button';
 
 const Hero = () => {
     return (
-        <section className="relative pt-32 pb-20 lg:pt-48 lg:pb-32 overflow-hidden">
-            {/* Background elements */}
-            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full -z-10">
-                <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-indigo-600/20 blur-[120px] rounded-full animate-pulse" />
-                <div className="absolute bottom-[10%] right-[-5%] w-[30%] h-[30%] bg-violet-600/20 blur-[100px] rounded-full" />
+        <section className="relative pt-40 pb-20 lg:pt-56 lg:pb-32 overflow-hidden bg-[#FDFCFB]">
+            {/* Unique Background Texture: Narrative Path */}
+            <div className="absolute inset-0 -z-10 overflow-hidden">
+                <svg className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full opacity-[0.03] text-[#0D9488]" viewBox="0 0 100 100" preserveAspectRatio="none">
+                    <path d="M0,0 Q50,50 100,0 V100 Q50,50 0,100 Z" fill="currentColor" />
+                </svg>
+                <div className="absolute top-1/4 right-0 w-[500px] h-[500px] bg-teal-100/30 blur-[120px] rounded-full" />
+                <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-orange-50/40 blur-[100px] rounded-full" />
             </div>
 
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-                {/* Hero Badge */}
-                <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5 }}
-                    className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 backdrop-blur-sm mb-8 hover:bg-white/10 transition-colors cursor-default"
-                >
-                    <span className="flex h-2 w-2 rounded-full bg-indigo-500 animate-ping" />
-                    <span className="text-sm font-medium text-slate-300">Over 2,000+ happy creators</span>
-                    <div className="w-px h-3 bg-white/20 mx-1" />
-                    <Star className="w-3 h-3 text-yellow-500 fill-yellow-500" />
-                    <span className="text-sm text-slate-400 font-medium">4.9/5 on G2</span>
-                </motion.div>
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 items-center">
 
-                {/* Headline */}
-                <motion.h1
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5, delay: 0.1 }}
-                    className="text-5xl md:text-7xl font-bold tracking-tight text-white mb-6 leading-[1.1]"
-                >
-                    All-in-one <span className="bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-violet-400">AI audio</span> <br className="hidden md:block" /> platform for creators
-                </motion.h1>
-
-                {/* Description */}
-                <motion.p
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5, delay: 0.2 }}
-                    className="text-lg md:text-xl text-slate-400 max-w-2xl mx-auto mb-10 leading-relaxed"
-                >
-                    Create studio-quality podcasts with AI avatars and voiceovers in 160+ languages.
-                    Save up to 90% of time and cost on audio production.
-                </motion.p>
-
-                {/* CTAs */}
-                <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5, delay: 0.3 }}
-                    className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16"
-                >
-                    <Button
-                        variant="primary"
-                        className="w-full sm:w-auto px-8 py-4 text-lg bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl shadow-2xl shadow-indigo-600/30 group"
-                    >
-                        Get started for FREE
-                        <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                    </Button>
-                    <Button
-                        variant="secondary"
-                        className="w-full sm:w-auto px-8 py-4 text-lg bg-white/5 hover:bg-white/10 text-white border-white/10 rounded-xl backdrop-blur-sm group"
-                    >
-                        <Play className="w-5 h-5 fill-white group-hover:scale-110 transition-transform" />
-                        Watch Demo
-                    </Button>
-                </motion.div>
-
-                {/* Social Proof / Trust Indicators */}
-                <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ duration: 0.8, delay: 0.5 }}
-                    className="flex flex-wrap items-center justify-center gap-x-8 gap-y-4 text-slate-500 font-medium"
-                >
-                    <span className="text-sm opacity-60">No credit card required</span>
-                    <div className="flex items-center gap-2">
-                        <CheckCircle2 size={16} className="text-indigo-500" />
-                        <span className="text-sm">Instant Setup</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <ShieldCheck size={16} className="text-indigo-500" />
-                        <span className="text-sm">Secure & Private</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <Zap size={16} className="text-indigo-500" />
-                        <span className="text-sm">AI-Powered</span>
-                    </div>
-                </motion.div>
-
-                {/* Visual Preview Placeholder */}
-                <motion.div
-                    initial={{ opacity: 0, y: 40 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.7, delay: 0.6 }}
-                    className="mt-20 relative px-4"
-                >
-                    <div className="max-w-5xl mx-auto rounded-2xl overflow-hidden border border-white/10 shadow-2xl shadow-indigo-500/10 bg-slate-900 group">
-                        {/* Mockup Top Bar */}
-                        <div className="h-8 bg-slate-800/50 flex items-center px-4 gap-1.5 border-b border-white/5">
-                            <div className="w-2.5 h-2.5 rounded-full bg-red-500/50" />
-                            <div className="w-2.5 h-2.5 rounded-full bg-yellow-500/50" />
-                            <div className="w-2.5 h-2.5 rounded-full bg-green-500/50" />
-                        </div>
-                        {/* Mockup Content */}
-                        <div className="aspect-[16/9] md:aspect-[21/9] bg-gradient-to-br from-indigo-900/40 to-slate-900 flex items-center justify-center relative group-hover:from-indigo-900/50 transition-colors">
-                            <div className="absolute inset-0 bg-grid opacity-20" />
-                            <div className="flex flex-col items-center gap-4 relative z-10">
-                                <div className="w-20 h-20 bg-indigo-500 rounded-full flex items-center justify-center shadow-2xl shadow-indigo-500/40 cursor-pointer hover:scale-110 transition-transform">
-                                    <Play size={32} className="text-white fill-white ml-1" />
-                                </div>
-                                <span className="text-slate-400 font-medium tracking-wide">See VoiceCast in action</span>
+                    {/* LEFT CONTENT: 60% */}
+                    <div className="lg:col-span-7 text-left">
+                        {/* Process Breadcrumb Indicator */}
+                        <motion.div
+                            initial={{ opacity: 0, x: -20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            className="flex items-center gap-3 mb-8"
+                        >
+                            <div className="flex items-center gap-2 px-3 py-1 bg-white border border-slate-200 rounded-full shadow-sm">
+                                <FileText size={14} className="text-slate-400" />
+                                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-tighter">Blog</span>
                             </div>
-                        </div>
+                            <div className="h-px w-6 bg-slate-200" />
+                            <div className="flex items-center gap-2 px-3 py-1 bg-teal-50 border border-teal-200 rounded-full shadow-sm scale-110">
+                                <Cpu size={14} className="text-[#0D9488]" />
+                                <span className="text-[10px] font-black text-[#0D9488] uppercase tracking-tighter">AI Agent</span>
+                            </div>
+                            <div className="h-px w-6 bg-slate-200" />
+                            <div className="flex items-center gap-2 px-3 py-1 bg-white border border-slate-200 rounded-full shadow-sm">
+                                <Headphones size={14} className="text-slate-400" />
+                                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-tighter">Podcast</span>
+                            </div>
+                        </motion.div>
+
+                        <motion.h1
+                            initial={{ opacity: 0, y: 30 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.6 }}
+                            className="text-6xl md:text-8xl font-black text-[#0F172A] leading-[0.9] tracking-tight mb-8"
+                        >
+                            Turn Your Blogs <br />
+                            Into Engaging <span className="text-[#0D9488] relative">
+                                AI-Powered
+                                <svg className="absolute -bottom-2 left-0 w-full" height="12" viewBox="0 0 100 12" preserveAspectRatio="none">
+                                    <path d="M0,10 Q25,0 50,10 Q75,20 100,10" stroke="#0D9488" strokeWidth="4" fill="none" opacity="0.3" />
+                                </svg>
+                            </span> <br />
+                            Podcasts <span className="italic font-serif font-light text-slate-400">in Minutes</span>
+                        </motion.h1>
+
+                        <motion.p
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.6, delay: 0.2 }}
+                            className="text-xl text-slate-600 max-w-xl mb-12 leading-relaxed"
+                        >
+                            Transform written content into natural-sounding podcast audio and avatar-based videos using advanced AI technology.
+                        </motion.p>
+
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.6, delay: 0.3 }}
+                            className="flex flex-wrap gap-4"
+                        >
+                            <Button
+                                className="bg-[#0F172A] hover:bg-[#0D9488] text-white px-10 py-5 rounded-2xl text-lg font-bold shadow-2xl shadow-slate-900/20 group"
+                            >
+                                🚀 Get Started
+                                <ArrowRight className="ml-2 group-hover:translate-x-1 transition-transform" />
+                            </Button>
+                            <Button
+                                variant="secondary"
+                                className="bg-white hover:bg-slate-100 border-slate-300 px-8 py-5 rounded-2xl text-lg font-bold shadow-md text-slate-700"
+                            >
+                                <Play className="mr-2 fill-[#0D9488] text-[#0D9488]" size={20} />
+                                ▶ Watch Demo
+                            </Button>
+                        </motion.div>
                     </div>
-                </motion.div>
+
+                    {/* RIGHT CONTENT: "AGENT CLOUD" (40%) */}
+                    <div className="lg:col-span-5 relative">
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.8 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            transition={{ duration: 0.8 }}
+                            className="relative aspect-square flex items-center justify-center"
+                        >
+                            {/* Central Core */}
+                            <div className="absolute w-48 h-48 bg-white rounded-[40px] shadow-2xl shadow-teal-900/10 border border-teal-50 flex items-center justify-center z-20 overflow-hidden group">
+                                <div className="absolute inset-0 bg-gradient-to-br from-teal-50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                                <div className="relative z-10 flex flex-col items-center">
+                                    <Mic size={48} className="text-[#0D9488] mb-2" />
+                                    <div className="flex gap-1">
+                                        {[1, 2, 3, 4].map(i => (
+                                            <motion.div
+                                                key={i}
+                                                animate={{ height: [8, 16, 8] }}
+                                                transition={{ repeat: Infinity, duration: 0.8, delay: i * 0.1 }}
+                                                className="w-1 bg-[#0D9488] rounded-full"
+                                            />
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Floating "Shards" / Interaction Cards */}
+                            <motion.div
+                                animate={{ y: [0, -20, 0] }}
+                                transition={{ repeat: Infinity, duration: 4, ease: "easeInOut" }}
+                                className="absolute -top-10 -right-5 w-40 p-4 bg-white/80 backdrop-blur-md rounded-2xl shadow-xl border border-white/50 z-30"
+                            >
+                                <div className="flex items-center gap-2 mb-2">
+                                    <Sparkles size={16} className="text-orange-400" />
+                                    <span className="text-[10px] font-black text-slate-800 uppercase">Analysis</span>
+                                </div>
+                                <div className="space-y-1">
+                                    <div className="h-1 w-full bg-teal-100 rounded-full" />
+                                    <div className="h-1 w-2/3 bg-teal-100 rounded-full" />
+                                </div>
+                            </motion.div>
+
+                            <motion.div
+                                animate={{ x: [0, 15, 0], y: [0, 15, 0] }}
+                                transition={{ repeat: Infinity, duration: 5, ease: "easeInOut", delay: 0.5 }}
+                                className="absolute bottom-5 -left-10 w-48 p-4 bg-[#0F172A] rounded-2xl shadow-2xl z-30 overflow-hidden"
+                            >
+                                <div className="absolute top-0 right-0 p-2 opacity-20">
+                                    <Zap className="text-white" size={24} />
+                                </div>
+                                <span className="text-[10px] font-bold text-teal-400 uppercase mb-2 block">Audio Engine</span>
+                                <AudioLines className="text-white opacity-40 mb-2 w-full" size={20} />
+                                <div className="flex items-center justify-between text-[8px] text-slate-400 font-mono">
+                                    <span>24-bit PCM</span>
+                                    <span>96kHz</span>
+                                </div>
+                            </motion.div>
+
+                            {/* Background Circles / Orbs */}
+                            <div className="absolute inset-0 border-[2px] border-dashed border-teal-200/50 rounded-full animate-[spin_20s_linear_infinite]" />
+                            <div className="absolute inset-16 border-[1px] border-slate-200/50 rounded-full animate-[spin_30s_linear_infinite_reverse]" />
+
+                            {/* Decorative Orbitals */}
+                            <motion.div
+                                animate={{ rotate: 360 }}
+                                transition={{ repeat: Infinity, duration: 10, ease: "linear" }}
+                                className="absolute w-full h-full"
+                            >
+                                <div className="absolute top-0 left-1/2 -ml-2 w-4 h-4 bg-orange-400 rounded-full shadow-lg shadow-orange-400/50" />
+                            </motion.div>
+                        </motion.div>
+                    </div>
+
+                </div>
             </div>
         </section>
     );

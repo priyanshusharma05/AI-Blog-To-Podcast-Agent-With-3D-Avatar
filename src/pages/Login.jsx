@@ -92,7 +92,7 @@ const Login = () => {
         <AuthLayout illustration={Illustration}>
             <AuthCard
                 title="Welcome Back"
-                subtitle="Sign in to your VoiceCast AI account"
+                subtitle="Login to continue creating AI-powered podcasts."
             >
                 <motion.form
                     initial={{ opacity: 0 }}
@@ -164,7 +164,7 @@ const Login = () => {
                             loading={loading}
                             icon={LogIn}
                         >
-                            Sign In to Dashboard
+                            Login
                         </Button>
                     </motion.div>
 
@@ -208,9 +208,9 @@ const Login = () => {
                 </motion.form>
 
                 <p className="mt-10 text-center text-sm text-slate-500">
-                    New to VoiceCast?{' '}
+                    Don't have an account?{' '}
                     <Link to="/signup" className="text-teal-400 font-bold hover:text-teal-300 transition-all border-b border-teal-500/20 hover:border-teal-500">
-                        Create free account
+                        Sign Up
                     </Link>
                 </p>
             </AuthCard>
