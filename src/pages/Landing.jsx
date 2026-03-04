@@ -24,21 +24,14 @@ const Landing = () => {
             <main>
                 <Hero />
 
-                {/* Section Connector */}
-                <div className="flex justify-center -mt-10 mb-20 relative z-20">
-                    <div className="h-40 w-px bg-gradient-to-b from-[#0D9488] to-transparent" />
-                </div>
+
 
                 {/* BENTO FEATURE GRID */}
-                <section className="py-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
-                    <div className="flex flex-col md:flex-row justify-between items-end mb-16 gap-8">
-                        <div className="max-w-2xl">
-                            <span className="text-[10px] font-black text-[#0D9488] uppercase tracking-[0.3em] mb-4 block">Capabilities</span>
-                            <h2 className="text-4xl md:text-6xl font-black tracking-tight leading-[0.9]">
-                                Powerful AI <br />
-                                <span className="text-slate-400">Features.</span>
-                            </h2>
-                        </div>
+                <section className="pt-40 pb-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+                    <div className="text-center mb-16">
+                        <h2 className="text-4xl md:text-6xl font-black tracking-tight leading-tight">
+                            Powerful AI <span className="text-slate-400">Features.</span>
+                        </h2>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-6 grid-rows-2 gap-6 h-auto md:h-[600px]">

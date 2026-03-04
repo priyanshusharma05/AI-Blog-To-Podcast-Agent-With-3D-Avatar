@@ -9,38 +9,33 @@ const AuthCard = ({ children, className, title, subtitle }) => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
             className={twMerge(
-                'relative p-[1px] rounded-3xl overflow-hidden group w-full max-w-md',
+                'relative bg-white rounded-[2rem] border border-slate-200/80 shadow-xl shadow-slate-200/60 w-full max-w-md overflow-hidden',
                 className
             )}
         >
-            {/* Animated Border Gradient */}
-            <div className="absolute inset-0 bg-gradient-to-r from-teal-500/50 via-violet-500/50 to-teal-500/50 animate-gradient-xy opacity-40 group-hover:opacity-100 transition-opacity duration-500" />
+            {/* Subtle teal top accent bar */}
+            <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#0D9488] via-teal-300 to-[#0D9488] opacity-60" />
 
-            <div className={twMerge(
-                'relative bg-[#020617]/80 backdrop-blur-2xl rounded-[calc(1.5rem-1px)] p-8 w-full glow-purple overflow-hidden flex flex-col',
-                'border border-white/5'
-            )}>
-                {/* Decorative Blur Objects */}
-                <div className="absolute -top-24 -right-24 w-48 h-48 bg-violet-600/10 blur-[80px] rounded-full" />
-                <div className="absolute -bottom-24 -left-24 w-48 h-48 bg-teal-500/10 blur-[80px] rounded-full" />
+            {/* Soft inner ambient glow */}
+            <div className="absolute -top-20 -right-20 w-48 h-48 bg-teal-50/60 blur-[60px] rounded-full pointer-events-none" />
+            <div className="absolute -bottom-20 -left-20 w-48 h-48 bg-orange-50/40 blur-[60px] rounded-full pointer-events-none" />
 
-                <div className="relative z-10">
-                    {(title || subtitle) && (
-                        <div className="mb-10 text-center">
-                            {title && (
-                                <h1 className="text-4xl font-black bg-gradient-to-br from-white via-white/90 to-slate-500 bg-clip-text text-transparent mb-3 tracking-tight">
-                                    {title}
-                                </h1>
-                            )}
-                            {subtitle && (
-                                <p className="text-slate-400 text-base font-medium">
-                                    {subtitle}
-                                </p>
-                            )}
-                        </div>
-                    )}
-                    {children}
-                </div>
+            <div className="relative p-8 md:p-10 flex flex-col">
+                {(title || subtitle) && (
+                    <div className="mb-8 text-center">
+                        {title && (
+                            <h1 className="text-3xl font-black text-[#0F172A] mb-2 tracking-tight">
+                                {title}
+                            </h1>
+                        )}
+                        {subtitle && (
+                            <p className="text-slate-500 text-sm font-medium">
+                                {subtitle}
+                            </p>
+                        )}
+                    </div>
+                )}
+                {children}
             </div>
         </motion.div>
     );

@@ -1,5 +1,4 @@
 import React from 'react';
-import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
 const Button = ({
@@ -11,16 +10,16 @@ const Button = ({
     ...props
 }) => {
     const variants = {
-        primary: 'bg-teal-500 hover:bg-teal-400 text-slate-900 shadow-lg shadow-teal-500/20',
-        secondary: 'bg-slate-800 hover:bg-slate-700 text-slate-200 border border-white/10',
-        outline: 'bg-transparent border border-teal-500/50 text-teal-400 hover:bg-teal-500/10',
-        ghost: 'bg-transparent hover:bg-white/5 text-slate-400 hover:text-slate-200',
+        primary: 'bg-[#0D9488] hover:bg-[#0F172A] text-white shadow-lg shadow-teal-900/20',
+        secondary: 'bg-white hover:bg-slate-50 text-[#0F172A] border border-slate-200 hover:border-slate-300 shadow-sm',
+        outline: 'bg-transparent border border-[#0D9488]/60 text-[#0D9488] hover:bg-teal-50',
+        ghost: 'bg-transparent hover:bg-slate-100 text-slate-500 hover:text-[#0F172A]',
     };
 
     return (
         <button
             className={twMerge(
-                'relative flex items-center justify-center gap-2 px-6 py-3 rounded-lg font-medium transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed transform active:scale-[0.98]',
+                'relative flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-bold transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98]',
                 variants[variant],
                 className
             )}
