@@ -28,8 +28,8 @@ const Navbar = () => {
                 initial={{ y: -20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 className={`flex items-center justify-between gap-8 px-6 py-3 rounded-full transition-all duration-500 border ${scrolled
-                        ? 'bg-white/80 backdrop-blur-xl border-teal-900/10 shadow-2xl shadow-teal-900/10 w-full max-w-5xl'
-                        : 'bg-white/40 backdrop-blur-md border-teal-900/5 w-full max-w-6xl'
+                    ? 'bg-white/80 backdrop-blur-xl border-teal-900/10 shadow-2xl shadow-teal-900/10 w-full max-w-5xl'
+                    : 'bg-white/40 backdrop-blur-md border-teal-900/5 w-full max-w-6xl'
                     }`}
             >
                 {/* Brand / Logo */}
@@ -51,13 +51,23 @@ const Navbar = () => {
                 {/* Desktop Nav Links - Centered */}
                 <div className="hidden md:flex items-center gap-1 bg-slate-100/50 p-1 rounded-full border border-slate-200/50">
                     {navLinks.map((link) => (
-                        <a
-                            key={link.name}
-                            href={link.href}
-                            className="px-5 py-2 text-sm font-bold text-slate-600 hover:text-[#0D9488] transition-all rounded-full hover:bg-white active:scale-95"
-                        >
-                            {link.name}
-                        </a>
+                        link.href.startsWith('/') ? (
+                            <Link
+                                key={link.name}
+                                to={link.href}
+                                className="px-5 py-2 text-sm font-bold text-slate-600 hover:text-[#0D9488] transition-all rounded-full hover:bg-white active:scale-95"
+                            >
+                                {link.name}
+                            </Link>
+                        ) : (
+                            <a
+                                key={link.name}
+                                href={link.href}
+                                className="px-5 py-2 text-sm font-bold text-slate-600 hover:text-[#0D9488] transition-all rounded-full hover:bg-white active:scale-95"
+                            >
+                                {link.name}
+                            </a>
+                        )
                     ))}
                 </div>
 
@@ -101,13 +111,24 @@ const Navbar = () => {
                     >
                         <div className="flex flex-col gap-2">
                             {navLinks.map((link) => (
-                                <a
-                                    key={link.name}
-                                    href={link.href}
-                                    className="p-4 text-lg font-bold text-slate-600 hover:text-[#0D9488] hover:bg-teal-50 rounded-2xl transition-all"
-                                >
-                                    {link.name}
-                                </a>
+                                link.href.startsWith('/') ? (
+                                    <Link
+                                        key={link.name}
+                                        to={link.href}
+                                        onClick={() => setIsOpen(false)}
+                                        className="p-4 text-lg font-bold text-slate-600 hover:text-[#0D9488] hover:bg-teal-50 rounded-2xl transition-all"
+                                    >
+                                        {link.name}
+                                    </Link>
+                                ) : (
+                                    <a
+                                        key={link.name}
+                                        href={link.href}
+                                        className="p-4 text-lg font-bold text-slate-600 hover:text-[#0D9488] hover:bg-teal-50 rounded-2xl transition-all"
+                                    >
+                                        {link.name}
+                                    </a>
+                                )
                             ))}
                             <div className="mt-4 pt-4 border-t border-slate-100 flex flex-col gap-3">
                                 <Link to="/login">

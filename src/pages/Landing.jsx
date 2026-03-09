@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { Sparkles, Zap, Globe, Mic, Headphones, ArrowRight, MessageSquare, AudioLines, Share2, UserCheck, Video, Layout } from 'lucide-react';
 import Navbar from '../components/layout/Navbar';
 import Hero from '../components/landing/Hero';
+import DemoVideo from '../components/landing/DemoVideo';
 
 const Landing = () => {
     const steps = [
@@ -23,8 +24,7 @@ const Landing = () => {
 
             <main>
                 <Hero />
-
-
+                <DemoVideo />
 
                 {/* BENTO FEATURE GRID */}
                 <section className="pt-40 pb-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">

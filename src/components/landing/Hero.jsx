@@ -143,7 +143,11 @@ const Hero = () => {
                                 🚀 Get Started
                                 <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
                             </Button>
-                            <Button variant="secondary" className="bg-transparent hover:bg-slate-50 border-0 shadow-none px-6 py-4 rounded-2xl text-base font-bold text-slate-600 whitespace-nowrap">
+                            <Button
+                                onClick={() => document.getElementById('demo-section')?.scrollIntoView({ behavior: 'smooth' })}
+                                variant="secondary"
+                                className="bg-transparent hover:bg-slate-50 border-0 shadow-none px-6 py-4 rounded-2xl text-base font-bold text-slate-600 whitespace-nowrap"
+                            >
                                 <Play className="mr-2 w-4 h-4 fill-[#0D9488] text-[#0D9488]" />
                                 Watch Demo
                             </Button>
