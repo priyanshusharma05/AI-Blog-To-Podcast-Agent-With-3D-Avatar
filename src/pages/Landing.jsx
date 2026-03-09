@@ -5,8 +5,11 @@ import { Link } from 'react-router-dom';
 import Navbar from '../components/layout/Navbar';
 import Hero from '../components/landing/Hero';
 import DemoVideo from '../components/landing/DemoVideo';
+import AboutModal from '../components/ui/AboutModal';
 
 const Landing = () => {
+    const [isAboutOpen, setIsAboutOpen] = React.useState(false);
+
     const steps = [
         { id: "1️⃣", title: "Upload Blog URL or Text", desc: "Start by pasting your content link or raw text." },
         { id: "2️⃣", title: "AI Generates Script", desc: "Our agent creates a conversational podcast script." },
@@ -186,13 +189,20 @@ const Landing = () => {
                     <div>
                         <h4 className="font-black uppercase text-xs tracking-widest mb-6">Company</h4>
                         <ul className="space-y-4 text-sm font-bold text-slate-500">
-                            <li>About</li>
+                            <li>
+                                <button onClick={() => setIsAboutOpen(true)} className="hover:text-[#0D9488] transition-colors">About</button>
+                            </li>
                             <li>Blog</li>
                             <li>Security</li>
                         </ul>
                     </div>
                 </div>
             </footer>
+
+            <AboutModal
+                isOpen={isAboutOpen}
+                onClose={() => setIsAboutOpen(false)}
+            />
         </div>
     );
 };
