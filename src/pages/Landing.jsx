@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Sparkles, Zap, Globe, Mic, Headphones, ArrowRight, MessageSquare, AudioLines, Share2, UserCheck, Video, Layout } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import Navbar from '../components/layout/Navbar';
 import Hero from '../components/landing/Hero';
 import DemoVideo from '../components/landing/DemoVideo';
@@ -27,7 +28,7 @@ const Landing = () => {
                 <DemoVideo />
 
                 {/* BENTO FEATURE GRID */}
-                <section className="pt-40 pb-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+                <section id="features" className="pt-40 pb-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
                     <div className="text-center mb-16">
                         <h2 className="text-4xl md:text-6xl font-black tracking-tight leading-tight">
                             Powerful AI <span className="text-slate-400">Features.</span>
@@ -93,7 +94,7 @@ const Landing = () => {
                 </section>
 
                 {/* HOW IT WORKS SECTION */}
-                <section className="py-32 bg-slate-50 relative overflow-hidden">
+                <section id="how-it-works" className="py-32 bg-slate-50 relative overflow-hidden">
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                         <div className="text-center mb-20">
                             <span className="text-[10px] font-black text-[#0D9488] uppercase tracking-[0.3em] mb-4 block">The Process</span>
@@ -119,7 +120,7 @@ const Landing = () => {
                 </section>
 
                 {/* USE CASES SECTION */}
-                <section className="py-32 bg-[#FDFCFB]">
+                <section id="use-cases" className="py-32 bg-[#FDFCFB]">
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                         <div className="flex flex-col md:flex-row items-center justify-between gap-12">
                             <div className="md:w-1/2">
@@ -153,9 +154,11 @@ const Landing = () => {
                             <h2 className="text-4xl md:text-7xl font-black text-white mb-8 tracking-tighter leading-none">
                                 Ready to Transform Your Content?
                             </h2>
-                            <button className="px-12 py-6 bg-white text-[#0D9488] font-black rounded-full text-xl shadow-xl hover:scale-105 transition-transform active:scale-95">
-                                🚀 Start Creating Podcasts
-                            </button>
+                            <Link to="/signup">
+                                <button className="px-12 py-6 bg-white text-[#0D9488] font-black rounded-full text-xl shadow-xl hover:scale-105 transition-transform active:scale-95">
+                                    🚀 Start Creating Podcasts
+                                </button>
+                            </Link>
                         </motion.div>
                     </div>
                 </section>

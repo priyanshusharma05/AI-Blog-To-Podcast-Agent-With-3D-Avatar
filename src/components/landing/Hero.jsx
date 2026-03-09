@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { ArrowRight, Play, FileText, Headphones } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import Button from '../ui/Button';
 
 // Text lines widths (blog content feel)
@@ -139,10 +140,12 @@ const Hero = () => {
                             transition={{ duration: 0.6, delay: 0.3 }}
                             className="inline-flex items-center gap-2 p-2 bg-white border border-slate-200 rounded-3xl shadow-xl shadow-slate-200/50"
                         >
-                            <Button className="bg-[#0F172A] hover:bg-[#0D9488] text-white px-8 py-4 rounded-2xl text-base font-bold shadow-lg shadow-slate-900/10 group whitespace-nowrap">
-                                🚀 Get Started
-                                <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                            </Button>
+                            <Link to="/signup">
+                                <Button className="bg-[#0F172A] hover:bg-[#0D9488] text-white px-8 py-4 rounded-2xl text-base font-bold shadow-lg shadow-slate-900/10 group whitespace-nowrap">
+                                    🚀 Get Started
+                                    <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                                </Button>
+                            </Link>
                             <Button
                                 onClick={() => document.getElementById('demo-section')?.scrollIntoView({ behavior: 'smooth' })}
                                 variant="secondary"

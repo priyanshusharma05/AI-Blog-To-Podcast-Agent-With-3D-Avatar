@@ -7,20 +7,49 @@ import { Link } from 'react-router-dom';
 const Navbar = () => {
     const [isOpen, setIsOpen] = useState(false);
     const [scrolled, setScrolled] = useState(false);
+    const [activeSection, setActiveSection] = useState('');
+
+    const navLinks = [
+        { name: 'Features', href: '/#features', id: 'features' },
+        { name: 'How It Works', href: '/#how-it-works', id: 'how-it-works' },
+        { name: 'Use Cases', href: '/#use-cases', id: 'use-cases' },
+    ];
 
     useEffect(() => {
         const handleScroll = () => {
             setScrolled(window.scrollY > 50);
+
+            // Scrollspy logic
+            const sections = navLinks.map(link => document.getElementById(link.id)).filter(Boolean);
+            let currentActive = '';
+
+            // Find the section that is currently most visible at the top of the screen
+            for (const section of sections) {
+                const rect = section.getBoundingClientRect();
+                // If the top of the section is above the middle of the screen (or close to top)
+                if (rect.top <= window.innerHeight * 0.3 && rect.bottom >= 0) {
+                    currentActive = section.id;
+                }
+            }
+            setActiveSection(currentActive);
         };
+
         window.addEventListener('scroll', handleScroll);
+        // Initial check
+        handleScroll();
         return () => window.removeEventListener('scroll', handleScroll);
     }, []);
 
-    const navLinks = [
-        { name: 'Platform', href: '#' },
-        { name: 'Solutions', href: '#' },
-        { name: 'Studio', href: '#' },
-    ];
+    const handleNavClick = (e, id) => {
+        if (window.location.pathname === '/') {
+            e.preventDefault();
+            const element = document.getElementById(id);
+            if (element) {
+                element.scrollIntoView({ behavior: 'smooth' });
+                setIsOpen(false);
+            }
+        }
+    };
 
     return (
         <div className="fixed top-6 left-0 right-0 z-50 flex justify-center px-4">
@@ -49,14 +78,25 @@ const Navbar = () => {
                 </Link>
 
                 {/* Desktop Nav Links - Centered */}
-                <div className="hidden md:flex items-center gap-1 bg-slate-100/50 p-1 rounded-full border border-slate-200/50">
-                    {navLinks.map((link) => (
-                        link.href.startsWith('/') ? (
+                <div className="hidden md:flex items-center gap-1 bg-slate-100/50 p-1 rounded-full border border-slate-200/50 relative">
+                    {navLinks.map((link) => {
+                        const isActive = activeSection === link.id;
+                        return link.href.startsWith('/') ? (
                             <Link
                                 key={link.name}
                                 to={link.href}
-                                className="px-5 py-2 text-sm font-bold text-slate-600 hover:text-[#0D9488] transition-all rounded-full hover:bg-white active:scale-95"
+                                onClick={(e) => handleNavClick(e, link.id)}
+                                className={`relative px-5 py-2 text-sm font-bold transition-all rounded-full z-10 ${isActive ? 'text-white' : 'text-slate-600 hover:text-[#0D9488] hover:bg-white active:scale-95'
+                                    }`}
                             >
+                                {isActive && (
+                                    <motion.div
+                                        layoutId="activeNavBackground"
+                                        className="absolute inset-0 bg-[#0D9488] rounded-full -z-10 shadow-md shadow-teal-900/10"
+                                        initial={false}
+                                        transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                                    />
+                                )}
                                 {link.name}
                             </Link>
                         ) : (
@@ -67,8 +107,8 @@ const Navbar = () => {
                             >
                                 {link.name}
                             </a>
-                        )
-                    ))}
+                        );
+                    })}
                 </div>
 
                 {/* Desktop Actions */}
@@ -78,12 +118,12 @@ const Navbar = () => {
                             Sign In
                         </button>
                     </Link>
-                    <Link to="/signup">
+                    <Link to="/login">
                         <Button
                             variant="primary"
                             className="bg-[#0D9488] hover:bg-[#0F172A] text-white rounded-full px-6 py-2.5 text-sm font-bold shadow-lg shadow-teal-900/10 group"
                         >
-                            <span>Launch App</span>
+                            <span>Login</span>
                             <Sparkles className="w-4 h-4 ml-2 group-hover:rotate-12 transition-transform" />
                         </Button>
                     </Link>
@@ -110,13 +150,15 @@ const Navbar = () => {
                         className="absolute top-20 left-4 right-4 bg-white rounded-3xl p-6 shadow-2xl border border-teal-900/10 md:hidden"
                     >
                         <div className="flex flex-col gap-2">
-                            {navLinks.map((link) => (
-                                link.href.startsWith('/') ? (
+                            {navLinks.map((link) => {
+                                const isActive = activeSection === link.id;
+                                return link.href.startsWith('/') ? (
                                     <Link
                                         key={link.name}
                                         to={link.href}
-                                        onClick={() => setIsOpen(false)}
-                                        className="p-4 text-lg font-bold text-slate-600 hover:text-[#0D9488] hover:bg-teal-50 rounded-2xl transition-all"
+                                        onClick={(e) => handleNavClick(e, link.id)}
+                                        className={`p-4 text-lg font-bold rounded-2xl transition-all ${isActive ? 'bg-[#0D9488] text-white' : 'text-slate-600 hover:text-[#0D9488] hover:bg-teal-50'
+                                            }`}
                                     >
                                         {link.name}
                                     </Link>
@@ -128,8 +170,8 @@ const Navbar = () => {
                                     >
                                         {link.name}
                                     </a>
-                                )
-                            ))}
+                                );
+                            })}
                             <div className="mt-4 pt-4 border-t border-slate-100 flex flex-col gap-3">
                                 <Link to="/login">
                                     <Button variant="ghost" className="w-full justify-center text-slate-600 text-lg">
