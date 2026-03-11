@@ -1,4 +1,5 @@
 
+import React from 'react';
 import { motion } from 'framer-motion';
 import { Sparkles, Zap, Mic, AudioLines, Share2, UserCheck, Video, Layout } from 'lucide-react';
 import { Link } from 'react-router-dom';
