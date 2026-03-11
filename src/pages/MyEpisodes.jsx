@@ -4,9 +4,10 @@ import {
     LayoutDashboard, PlusCircle, AudioLines, Settings, LogOut,
     Mic, Search, Filter, Play, Clock, ChevronRight,
     Bell, BarChart3, Headphones, MoreHorizontal, ArrowUpRight,
-    CheckCircle2, Zap, FileText, Loader2
+    CheckCircle2, Zap, FileText, Loader2, Sun, Moon
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useEffect } from 'react';
 
 /* ─── Sidebar link (shared style) ───────────────── */
 const SideLink = ({ icon: Icon, label, active, onClick }) => (
@@ -15,10 +16,10 @@ const SideLink = ({ icon: Icon, label, active, onClick }) => (
         className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-bold transition-all duration-200 group
         ${active
                 ? 'bg-[#0D9488] text-white shadow-lg shadow-teal-200/50'
-                : 'text-slate-500 hover:bg-slate-100 hover:text-slate-800'
+                : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-100'
             }`}
     >
-        <Icon size={18} className={active ? 'text-white' : 'text-slate-400 group-hover:text-slate-600'} />
+        <Icon size={18} className={active ? 'text-white' : 'text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-300'} />
         {label}
     </button>
 );
@@ -26,7 +27,7 @@ const SideLink = ({ icon: Icon, label, active, onClick }) => (
 /* ─── Status Badge (refactored for grid cards) ─── */
 const StatusBadge = ({ status }) => {
     const map = {
-        ready: { label: 'Ready', bg: 'bg-violet-500/10', text: 'text-violet-400', dot: 'bg-violet-500' },
+        ready: { label: 'Ready', bg: 'bg-emerald-500/10', text: 'text-emerald-500', dot: 'bg-emerald-500' },
         draft: { label: 'Draft', bg: 'bg-slate-500/10', text: 'text-slate-400', dot: 'bg-slate-400' },
         generating: { label: 'Generating', bg: 'bg-teal-500/10', text: 'text-teal-400', dot: 'bg-teal-500' },
     };
@@ -127,6 +128,21 @@ const MyEpisodes = () => {
     const [activeNav, setActiveNav] = useState('episodes');
     const [filter, setFilter] = useState('All');
     const [search, setSearch] = useState('');
+    const [isDark, setIsDark] = useState(() => {
+        return document.documentElement.classList.contains('dark');
+    });
+
+    useEffect(() => {
+        if (isDark) {
+            document.documentElement.classList.add('dark');
+            localStorage.setItem('vc_theme', 'dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+            localStorage.setItem('vc_theme', 'light');
+        }
+    }, [isDark]);
+
+    const toggleTheme = () => setIsDark(!isDark);
 
     const stored = localStorage.getItem('vc_user');
     const user = stored ? JSON.parse(stored) : { name: 'Guest', email: '' };
@@ -140,16 +156,16 @@ const MyEpisodes = () => {
     });
 
     return (
-        <div className="min-h-screen bg-[#F8FAFB] flex font-sans">
+        <div className="min-h-screen bg-[#F8FAFB] dark:bg-slate-950 flex font-sans transition-colors duration-300">
 
             {/* ─── SIDEBAR ─── */}
-            <aside className="w-64 shrink-0 hidden lg:flex flex-col bg-white border-r border-slate-100 min-h-screen fixed left-0 top-0 bottom-0 z-30 px-4 py-6">
+            <aside className="w-64 shrink-0 hidden lg:flex flex-col bg-white dark:bg-slate-900 border-r border-slate-100 dark:border-slate-800 min-h-screen fixed left-0 top-0 bottom-0 z-30 px-4 py-6">
                 <Link to="/" className="flex items-center gap-2.5 px-2 mb-8 group">
                     <div className="w-9 h-9 bg-[#0D9488] rounded-xl flex items-center justify-center shadow-md shadow-teal-200">
                         <Mic size={16} className="text-white" />
                     </div>
                     <div>
-                        <span className="text-base font-black tracking-tight text-slate-800">
+                        <span className="text-base font-black tracking-tight text-slate-800 dark:text-slate-100">
                             VOICE<span className="text-[#0D9488]">CAST</span>
                         </span>
                         <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest -mt-0.5">Narrator AI</p>
@@ -163,18 +179,18 @@ const MyEpisodes = () => {
                     <SideLink icon={AudioLines} label="My Episodes" active={activeNav === 'episodes'} onClick={() => setActiveNav('episodes')} />
                     <SideLink icon={BarChart3} label="Analytics" active={activeNav === 'analytics'} onClick={() => navigate('/dashboard')} />
 
-                    <div className="mt-auto pt-4 border-t border-slate-100 flex flex-col gap-1">
+                    <div className="mt-auto pt-4 border-t border-slate-100 dark:border-slate-800 flex flex-col gap-1">
                         <SideLink icon={Settings} label="Settings" active={false} onClick={() => { }} />
                         <SideLink icon={LogOut} label="Logout" active={false} onClick={() => { localStorage.removeItem('vc_user'); navigate('/'); }} />
                     </div>
                 </nav>
 
-                <div className="mt-6 flex items-center gap-3 px-3 py-3 bg-slate-50 rounded-2xl border border-slate-100">
+                <div className="mt-6 flex items-center gap-3 px-3 py-3 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-800">
                     <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#0D9488] to-teal-300 flex items-center justify-center text-white text-xs font-black shrink-0">
                         {initials}
                     </div>
                     <div className="overflow-hidden">
-                        <p className="text-sm font-bold text-slate-800 truncate">{user.name.split(' ')[0]}</p>
+                        <p className="text-sm font-bold text-slate-800 dark:text-slate-100 truncate">{user.name.split(' ')[0]}</p>
                         <p className="text-xs text-slate-400 truncate">{user.email}</p>
                     </div>
                 </div>
@@ -184,9 +200,9 @@ const MyEpisodes = () => {
             <main className="flex-1 lg:ml-64 min-h-screen flex flex-col">
 
                 {/* Top bar */}
-                <header className="sticky top-0 z-20 bg-white/80 backdrop-blur-xl border-b border-slate-100 px-6 md:px-10 py-4 flex items-center justify-between">
+                <header className="sticky top-0 z-20 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-100 dark:border-slate-800 px-6 md:px-10 py-4 flex items-center justify-between">
                     <div>
-                        <h1 className="text-lg font-black text-slate-800 tracking-tight">Episodes</h1>
+                        <h1 className="text-lg font-black text-slate-800 dark:text-slate-100 tracking-tight">Episodes</h1>
                         <p className="text-xs text-slate-400 font-medium">Browse and manage all your podcast episodes</p>
                     </div>
                     <div className="flex items-center gap-3">
@@ -196,7 +212,13 @@ const MyEpisodes = () => {
                         >
                             <PlusCircle size={14} /> New Episode
                         </button>
-                        <button className="relative w-9 h-9 rounded-xl bg-slate-100 flex items-center justify-center text-slate-500 hover:bg-slate-200 transition-colors">
+                        <button
+                            onClick={toggleTheme}
+                            className="w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+                        >
+                            {isDark ? <Sun size={16} /> : <Moon size={16} />}
+                        </button>
+                        <button className="relative w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
                             <Bell size={16} />
                         </button>
                         <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#0D9488] to-teal-300 flex items-center justify-center text-white text-xs font-black cursor-pointer">
@@ -218,19 +240,19 @@ const MyEpisodes = () => {
                                 placeholder="Search episodes..."
                                 value={search}
                                 onChange={(e) => setSearch(e.target.value)}
-                                className="w-full bg-white border border-slate-200 rounded-2xl pl-11 pr-4 py-3 text-sm text-slate-800 focus:outline-none focus:border-[#0D9488]/50 focus:ring-4 focus:ring-teal-500/5 transition-all shadow-sm"
+                                className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl pl-11 pr-4 py-3 text-sm text-slate-800 dark:text-slate-100 focus:outline-none focus:border-[#0D9488]/50 focus:ring-4 focus:ring-teal-500/5 transition-all shadow-sm"
                             />
                         </div>
 
                         {/* Filter Tabs */}
-                        <div className="flex bg-slate-100 p-1 rounded-2xl gap-1">
+                        <div className="flex bg-slate-100 dark:bg-slate-900 p-1 rounded-2xl gap-1">
                             {['All', 'Draft', 'Generating', 'Ready'].map((tab) => (
                                 <button
                                     key={tab}
                                     onClick={() => setFilter(tab)}
                                     className={`px-4 py-2 rounded-xl text-xs font-black transition-all ${filter === tab
                                         ? 'bg-[#0D9488] text-white shadow-md'
-                                        : 'text-slate-500 hover:text-slate-800'
+                                        : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-100'
                                         }`}
                                 >
                                     {tab}
@@ -250,11 +272,11 @@ const MyEpisodes = () => {
                                 exit={{ opacity: 0, scale: 0.95 }}
                                 className="flex flex-col items-center justify-center py-24 text-center"
                             >
-                                <div className="w-20 h-20 rounded-3xl bg-teal-50 border border-teal-100 flex items-center justify-center mb-6">
+                                <div className="w-20 h-20 rounded-3xl bg-teal-50 dark:bg-teal-500/10 border border-teal-100 dark:border-teal-500/20 flex items-center justify-center mb-6">
                                     <AudioLines size={40} className="text-[#0D9488]" />
                                 </div>
-                                <h3 className="text-xl font-black text-slate-800 mb-2">No episodes found</h3>
-                                <p className="text-sm text-slate-500 max-w-[300px] mb-8">
+                                <h3 className="text-xl font-black text-slate-800 dark:text-slate-100 mb-2">No episodes found</h3>
+                                <p className="text-sm text-slate-500 dark:text-slate-400 max-w-[300px] mb-8">
                                     {search
                                         ? `We couldn't find any episodes matching "${search}"`
                                         : "You haven't created any episodes yet. Start your first one today!"}
@@ -278,14 +300,14 @@ const MyEpisodes = () => {
                                         initial={{ opacity: 0, scale: 0.9 }}
                                         animate={{ opacity: 1, scale: 1 }}
                                         exit={{ opacity: 0, scale: 0.9 }}
-                                        className="group relative bg-[#12141C] rounded-[24px] overflow-hidden flex flex-col border border-white/5 hover:border-teal-500/30 transition-all shadow-xl"
+                                        className="group relative bg-teal-50/30 dark:bg-slate-900 rounded-[24px] overflow-hidden flex flex-col border border-teal-100/50 dark:border-slate-800 hover:border-teal-500/30 transition-all shadow-xl"
                                     >
                                         {/* Visual/Image Area */}
-                                        <div className="relative h-48 bg-gradient-to-br from-[#1A1D29] to-[#0A0B12] flex items-center justify-center overflow-hidden">
+                                        <div className="relative h-48 bg-gradient-to-br from-teal-50 to-teal-100/50 dark:from-[#1A1D29] dark:to-[#0A0B12] flex items-center justify-center overflow-hidden">
                                             {/* decorative glowing circle */}
                                             <div className="absolute inset-0 bg-teal-500/5 opacity-0 group-hover:opacity-100 transition-opacity" />
-                                            <div className="relative z-10 w-16 h-16 rounded-3xl bg-white/5 border border-white/10 flex items-center justify-center backdrop-blur-md">
-                                                <Mic size={24} className="text-teal-400 opacity-60 group-hover:opacity-100 transition-opacity" />
+                                            <div className="relative z-10 w-16 h-16 rounded-3xl bg-white/50 dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center justify-center backdrop-blur-md">
+                                                <Mic size={24} className="text-[#0D9488] dark:text-teal-400 opacity-60 group-hover:opacity-100 transition-opacity" />
                                             </div>
 
                                             {/* Audio Visualization Lines (decorative) */}
@@ -307,7 +329,7 @@ const MyEpisodes = () => {
 
                                         {/* Content Area */}
                                         <div className="p-6 flex-1 flex flex-col">
-                                            <h3 className="text-lg font-black text-white group-hover:text-teal-400 transition-colors leading-tight mb-2 truncate">
+                                            <h3 className="text-lg font-black text-slate-800 dark:text-white group-hover:text-teal-600 dark:group-hover:text-teal-400 transition-colors leading-tight mb-2 truncate">
                                                 {ep.title}
                                             </h3>
                                             <p className="text-slate-400 text-sm font-medium line-clamp-2 mb-6">

@@ -3,9 +3,10 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
     LayoutDashboard, PlusCircle, AudioLines, Settings, LogOut,
     Mic, Sparkles, Link2, FileText, Zap, ChevronRight,
-    Bell, BarChart3, ArrowRight, CheckCircle2, Loader2,
+    Bell, BarChart3, ArrowRight, CheckCircle2, Loader2, Sun, Moon
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useEffect } from 'react';
 
 /* ─── Sidebar link (shared style) ───────────────── */
 const SideLink = ({ icon: Icon, label, active, onClick }) => (
@@ -14,10 +15,10 @@ const SideLink = ({ icon: Icon, label, active, onClick }) => (
         className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-bold transition-all duration-200 group
         ${active
                 ? 'bg-[#0D9488] text-white shadow-lg shadow-teal-200/50'
-                : 'text-slate-500 hover:bg-slate-100 hover:text-slate-800'
+                : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-100'
             }`}
     >
-        <Icon size={18} className={active ? 'text-white' : 'text-slate-400 group-hover:text-slate-600'} />
+        <Icon size={18} className={active ? 'text-white' : 'text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-300'} />
         {label}
     </button>
 );
@@ -72,7 +73,7 @@ const AIAvatar = ({ status }) => (
 
         {/* status label */}
         <div className="text-center">
-            <p className="text-sm font-black text-slate-700">AI Podcast Host</p>
+            <p className="text-sm font-black text-slate-700 dark:text-slate-100">AI Podcast Host</p>
             <div className="flex items-center justify-center gap-1.5 mt-1">
                 {status === 'generating' ? (
                     <Loader2 size={11} className="text-[#0D9488] animate-spin" />
@@ -111,6 +112,21 @@ const CreateEpisode = () => {
     const [blogUrl, setBlogUrl] = useState('');
     const [pasteText, setPasteText] = useState('');
     const [status, setStatus] = useState('idle'); // 'idle' | 'generating' | 'done'
+    const [isDark, setIsDark] = useState(() => {
+        return document.documentElement.classList.contains('dark');
+    });
+
+    useEffect(() => {
+        if (isDark) {
+            document.documentElement.classList.add('dark');
+            localStorage.setItem('vc_theme', 'dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+            localStorage.setItem('vc_theme', 'light');
+        }
+    }, [isDark]);
+
+    const toggleTheme = () => setIsDark(!isDark);
 
     const stored = localStorage.getItem('vc_user');
     const user = stored ? JSON.parse(stored) : { name: 'Guest', email: '' };
@@ -126,16 +142,16 @@ const CreateEpisode = () => {
     };
 
     return (
-        <div className="min-h-screen bg-[#F8FAFB] flex font-sans">
+        <div className="min-h-screen bg-[#F8FAFB] dark:bg-slate-950 flex font-sans transition-colors duration-300">
 
             {/* ─── SIDEBAR ─── */}
-            <aside className="w-64 shrink-0 hidden lg:flex flex-col bg-white border-r border-slate-100 min-h-screen fixed left-0 top-0 bottom-0 z-30 px-4 py-6">
+            <aside className="w-64 shrink-0 hidden lg:flex flex-col bg-white dark:bg-slate-900 border-r border-slate-100 dark:border-slate-800 min-h-screen fixed left-0 top-0 bottom-0 z-30 px-4 py-6">
                 <Link to="/" className="flex items-center gap-2.5 px-2 mb-8 group">
                     <div className="w-9 h-9 bg-[#0D9488] rounded-xl flex items-center justify-center shadow-md shadow-teal-200">
                         <Mic size={16} className="text-white" />
                     </div>
                     <div>
-                        <span className="text-base font-black tracking-tight text-slate-800">
+                        <span className="text-base font-black tracking-tight text-slate-800 dark:text-slate-100">
                             VOICE<span className="text-[#0D9488]">CAST</span>
                         </span>
                         <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest -mt-0.5">Narrator AI</p>
@@ -149,18 +165,18 @@ const CreateEpisode = () => {
                     <SideLink icon={AudioLines} label="My Episodes" active={activeNav === 'episodes'} onClick={() => navigate('/episodes')} />
                     <SideLink icon={BarChart3} label="Analytics" active={activeNav === 'analytics'} onClick={() => navigate('/dashboard')} />
 
-                    <div className="mt-auto pt-4 border-t border-slate-100 flex flex-col gap-1">
+                    <div className="mt-auto pt-4 border-t border-slate-100 dark:border-slate-800 flex flex-col gap-1">
                         <SideLink icon={Settings} label="Settings" active={false} onClick={() => { }} />
                         <SideLink icon={LogOut} label="Logout" active={false} onClick={() => { localStorage.removeItem('vc_user'); navigate('/'); }} />
                     </div>
                 </nav>
 
-                <div className="mt-6 flex items-center gap-3 px-3 py-3 bg-slate-50 rounded-2xl border border-slate-100">
+                <div className="mt-6 flex items-center gap-3 px-3 py-3 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-800">
                     <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#0D9488] to-teal-300 flex items-center justify-center text-white text-xs font-black shrink-0">
                         {initials}
                     </div>
                     <div className="overflow-hidden">
-                        <p className="text-sm font-bold text-slate-800 truncate">{user.name.split(' ')[0]}</p>
+                        <p className="text-sm font-bold text-slate-800 dark:text-slate-100 truncate">{user.name.split(' ')[0]}</p>
                         <p className="text-xs text-slate-400 truncate">{user.email}</p>
                     </div>
                 </div>
@@ -170,13 +186,19 @@ const CreateEpisode = () => {
             <main className="flex-1 lg:ml-64 min-h-screen flex flex-col">
 
                 {/* Top bar */}
-                <header className="sticky top-0 z-20 bg-white/80 backdrop-blur-xl border-b border-slate-100 px-6 md:px-10 py-4 flex items-center justify-between">
+                <header className="sticky top-0 z-20 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-100 dark:border-slate-800 px-6 md:px-10 py-4 flex items-center justify-between">
                     <div>
-                        <h1 className="text-lg font-black text-slate-800 tracking-tight">Create Episode</h1>
+                        <h1 className="text-lg font-black text-slate-800 dark:text-slate-100 tracking-tight">Create Episode</h1>
                         <p className="text-xs text-slate-400 font-medium">Transform a blog into a podcast script</p>
                     </div>
                     <div className="flex items-center gap-3">
-                        <button className="relative w-9 h-9 rounded-xl bg-slate-100 flex items-center justify-center text-slate-500 hover:bg-slate-200 transition-colors">
+                        <button
+                            onClick={toggleTheme}
+                            className="w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+                        >
+                            {isDark ? <Sun size={16} /> : <Moon size={16} />}
+                        </button>
+                        <button className="relative w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
                             <Bell size={16} />
                         </button>
                         <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#0D9488] to-teal-300 flex items-center justify-center text-white text-xs font-black cursor-pointer">
@@ -199,35 +221,35 @@ const CreateEpisode = () => {
                             <form onSubmit={handleGenerate} className="space-y-6">
 
                                 {/* Step 1 — Title */}
-                                <div className="bg-white rounded-[24px] border border-slate-100 shadow-sm p-6 space-y-4">
+                                <div className="bg-white dark:bg-slate-900 rounded-[24px] border border-slate-100 dark:border-slate-800 shadow-sm p-6 space-y-4">
                                     <div className="flex items-center gap-2.5 mb-1">
-                                        <div className="w-6 h-6 rounded-lg bg-teal-50 border border-teal-100 flex items-center justify-center text-[10px] font-black text-[#0D9488]">1</div>
-                                        <p className="text-sm font-black text-slate-700">Episode Title <span className="text-slate-400 font-medium">(optional)</span></p>
+                                        <div className="w-6 h-6 rounded-lg bg-teal-50 dark:bg-teal-500/10 border border-teal-100 dark:border-teal-500/20 flex items-center justify-center text-[10px] font-black text-[#0D9488]">1</div>
+                                        <p className="text-sm font-black text-slate-700 dark:text-slate-200">Episode Title <span className="text-slate-400 dark:text-slate-500 font-medium">(optional)</span></p>
                                     </div>
                                     <input
                                         type="text"
                                         placeholder="e.g. The Future of AI in Healthcare"
                                         value={title}
                                         onChange={(e) => setTitle(e.target.value)}
-                                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3.5 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-[#0D9488]/50 focus:ring-4 focus:ring-teal-500/10 transition-all"
+                                        className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3.5 text-sm text-slate-800 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-600 focus:outline-none focus:border-[#0D9488]/50 focus:ring-4 focus:ring-teal-500/10 transition-all"
                                     />
                                 </div>
 
                                 {/* Step 2 — Source */}
-                                <div className="bg-white rounded-[24px] border border-slate-100 shadow-sm p-6 space-y-4">
+                                <div className="bg-white dark:bg-slate-900 rounded-[24px] border border-slate-100 dark:border-slate-800 shadow-sm p-6 space-y-4">
                                     <div className="flex items-center gap-2.5 mb-1">
-                                        <div className="w-6 h-6 rounded-lg bg-teal-50 border border-teal-100 flex items-center justify-center text-[10px] font-black text-[#0D9488]">2</div>
-                                        <p className="text-sm font-black text-slate-700">Blog Content Source</p>
+                                        <div className="w-6 h-6 rounded-lg bg-teal-50 dark:bg-teal-500/10 border border-teal-100 dark:border-teal-500/20 flex items-center justify-center text-[10px] font-black text-[#0D9488]">2</div>
+                                        <p className="text-sm font-black text-slate-700 dark:text-slate-200">Blog Content Source</p>
                                     </div>
 
                                     {/* Mode tabs */}
-                                    <div className="inline-flex bg-slate-100 rounded-xl p-1 gap-1">
+                                    <div className="inline-flex bg-slate-100 dark:bg-slate-800 rounded-xl p-1 gap-1">
                                         <button
                                             type="button"
                                             onClick={() => setInputMode('url')}
                                             className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all ${inputMode === 'url'
                                                 ? 'bg-[#0D9488] text-white shadow-md'
-                                                : 'text-slate-500 hover:text-slate-700'
+                                                : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
                                                 }`}
                                         >
                                             <Link2 size={14} /> Blog URL
@@ -237,7 +259,7 @@ const CreateEpisode = () => {
                                             onClick={() => setInputMode('text')}
                                             className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all ${inputMode === 'text'
                                                 ? 'bg-[#0D9488] text-white shadow-md'
-                                                : 'text-slate-500 hover:text-slate-700'
+                                                : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
                                                 }`}
                                         >
                                             <FileText size={14} /> Write
@@ -263,10 +285,10 @@ const CreateEpisode = () => {
                                                         placeholder="https://example.com/blog-post"
                                                         value={blogUrl}
                                                         onChange={(e) => setBlogUrl(e.target.value)}
-                                                        className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-11 pr-4 py-3.5 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-[#0D9488]/50 focus:ring-4 focus:ring-teal-500/10 transition-all"
+                                                        className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl pl-11 pr-4 py-3.5 text-sm text-slate-800 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-600 focus:outline-none focus:border-[#0D9488]/50 focus:ring-4 focus:ring-teal-500/10 transition-all"
                                                     />
                                                 </div>
-                                                <p className="text-xs text-slate-400 font-medium mt-2 ml-1">Paste a public blog URL and we'll fetch the content automatically.</p>
+                                                <p className="text-xs text-slate-400 dark:text-slate-500 font-medium mt-2 ml-1">Paste a public blog URL and we'll fetch the content automatically.</p>
                                             </motion.div>
                                         ) : (
                                             <motion.div
@@ -281,19 +303,19 @@ const CreateEpisode = () => {
                                                     placeholder="Write or paste your content here..."
                                                     value={pasteText}
                                                     onChange={(e) => setPasteText(e.target.value)}
-                                                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3.5 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-[#0D9488]/50 focus:ring-4 focus:ring-teal-500/10 transition-all resize-none"
+                                                    className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3.5 text-sm text-slate-800 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-600 focus:outline-none focus:border-[#0D9488]/50 focus:ring-4 focus:ring-teal-500/10 transition-all resize-none"
                                                 />
-                                                <p className="text-xs text-slate-400 font-medium mt-2 ml-1">{pasteText.length} characters · Recommended: 500–5000 characters</p>
+                                                <p className="text-xs text-slate-400 dark:text-slate-500 font-medium mt-2 ml-1">{pasteText.length} characters · Recommended: 500–5000 characters</p>
                                             </motion.div>
                                         )}
                                     </AnimatePresence>
                                 </div>
 
                                 {/* Step 3 — Voice & Tone */}
-                                <div className="bg-white rounded-[24px] border border-slate-100 shadow-sm p-6">
+                                <div className="bg-white dark:bg-slate-900 rounded-[24px] border border-slate-100 dark:border-slate-800 shadow-sm p-6">
                                     <div className="flex items-center gap-2.5 mb-4">
-                                        <div className="w-6 h-6 rounded-lg bg-teal-50 border border-teal-100 flex items-center justify-center text-[10px] font-black text-[#0D9488]">3</div>
-                                        <p className="text-sm font-black text-slate-700">Voice Tone</p>
+                                        <div className="w-6 h-6 rounded-lg bg-teal-50 dark:bg-teal-500/10 border border-teal-100 dark:border-teal-500/20 flex items-center justify-center text-[10px] font-black text-[#0D9488]">3</div>
+                                        <p className="text-sm font-black text-slate-700 dark:text-slate-200">Voice Tone</p>
                                     </div>
                                     <div className="grid grid-cols-3 gap-3">
                                         {[
@@ -301,7 +323,7 @@ const CreateEpisode = () => {
                                             { label: 'Professional', emoji: '🎙️', desc: 'Formal & clear' },
                                             { label: 'Energetic', emoji: '⚡', desc: 'Lively & upbeat' },
                                         ].map(({ label, emoji, desc }) => (
-                                            <VoiceToneCard key={label} label={label} emoji={emoji} desc={desc} />
+                                            <VoiceToneCard key={label} label={label} emoji={emoji} desc={desc} isDark={isDark} />
                                         ))}
                                     </div>
                                 </div>
@@ -313,8 +335,8 @@ const CreateEpisode = () => {
                                     whileHover={canGenerate ? { scale: 1.02 } : {}}
                                     whileTap={canGenerate ? { scale: 0.98 } : {}}
                                     className={`w-full flex items-center justify-center gap-3 py-4 rounded-2xl font-black text-base transition-all shadow-lg ${canGenerate && status !== 'generating'
-                                        ? 'bg-[#0D9488] text-white shadow-teal-200 hover:shadow-teal-300'
-                                        : 'bg-slate-100 text-slate-400 cursor-not-allowed shadow-none'
+                                        ? 'bg-[#0D9488] text-white shadow-teal-200/50 dark:shadow-teal-900/40 hover:shadow-teal-300 dark:hover:shadow-teal-800/60'
+                                        : 'bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-600 cursor-not-allowed shadow-none'
                                         }`}
                                 >
                                     {status === 'generating' ? (
@@ -358,11 +380,11 @@ const CreateEpisode = () => {
                             transition={{ duration: 0.5, delay: 0.15 }}
                             className="xl:w-72 w-full"
                         >
-                            <div className="bg-white rounded-[24px] border border-slate-100 shadow-sm p-8 flex flex-col items-center gap-6 sticky top-24">
+                            <div className="bg-white dark:bg-slate-900 rounded-[24px] border border-slate-100 dark:border-slate-800 shadow-sm p-8 flex flex-col items-center gap-6 sticky top-24">
                                 <AIAvatar status={status} />
 
                                 {/* Tips */}
-                                <div className="w-full space-y-2.5 pt-4 border-t border-slate-100">
+                                <div className="w-full space-y-2.5 pt-4 border-t border-slate-100 dark:border-slate-800">
                                     <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3">Tips</p>
                                     {[
                                         'Use a publicly accessible blog URL.',
@@ -385,20 +407,20 @@ const CreateEpisode = () => {
 };
 
 /* ─── Voice Tone Card ────────────────────────────── */
-const VoiceToneCard = ({ label, emoji, desc }) => {
+const VoiceToneCard = ({ label, emoji, desc, isDark }) => {
     const [selected, setSelected] = useState(label === 'Conversational');
     return (
         <button
             type="button"
             onClick={() => setSelected((p) => !p)}
             className={`flex flex-col items-center gap-1.5 p-3.5 rounded-2xl border text-center transition-all ${selected
-                ? 'bg-teal-50 border-teal-200 shadow-sm'
-                : 'bg-slate-50 border-slate-200 hover:border-teal-200 hover:bg-teal-50/40'
+                ? 'bg-teal-50 dark:bg-teal-500/10 border-teal-200 dark:border-teal-500/30 shadow-sm'
+                : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:border-teal-200 hover:bg-teal-50/40 dark:hover:bg-teal-500/5'
                 }`}
         >
             <span className="text-xl">{emoji}</span>
-            <p className={`text-xs font-black ${selected ? 'text-[#0D9488]' : 'text-slate-700'}`}>{label}</p>
-            <p className="text-[10px] text-slate-400 font-medium">{desc}</p>
+            <p className={`text-xs font-black ${selected ? 'text-[#0D9488]' : 'text-slate-700 dark:text-slate-200'}`}>{label}</p>
+            <p className="text-[10px] text-slate-400 dark:text-slate-500 font-medium">{desc}</p>
         </button>
     );
 };
