@@ -23,29 +23,31 @@ import {
 import { Link, useNavigate } from 'react-router-dom';
 
 /* ─── Stats config ───────────────────────────────── */
-const STATS = [
-    { label: 'Total Episodes', value: '0', icon: AudioLines, color: 'teal', change: 'No episodes yet' },
-    { label: 'Published', value: '0', icon: CheckCircle2, color: 'emerald', change: 'Nothing live yet' },
-    { label: 'Drafts', value: '0', icon: FileText, color: 'amber', change: 'No drafts' },
-    { label: 'Ready', value: '0', icon: Zap, color: 'violet', change: 'Nothing ready' },
+const EPISODES = [
+    { id: 1, title: 'The Future of AI in Creative Industries', status: 'ready', duration: '4 min', date: 'Mar 11, 2026', views: 0 },
+    { id: 2, title: 'Remote Work Revolution: What We Learned', status: 'ready', duration: '3 min', date: 'Mar 11, 2026', views: 0 },
+    { id: 3, title: 'Understanding Blockchain Beyond Crypto', status: 'draft', duration: '4 min', date: 'Mar 11, 2026', views: 0 },
+    { id: 4, title: 'Sustainable Living: Simple Daily Habits', status: 'generating', duration: '--', date: 'Mar 12, 2026', views: 0 },
+    { id: 5, title: 'The Rise of Personal Branding', status: 'ready', duration: '5 min', date: 'Mar 10, 2026', views: 0 },
+    { id: 6, title: 'Mental Health in the Tech Industry', status: 'ready', duration: '4 min', date: 'Mar 09, 2026', views: 0 },
+    { id: 7, title: 'AI Ethics: Navigating the New Frontier', status: 'draft', duration: '6 min', date: 'Mar 12, 2026', views: 0 },
+    { id: 8, title: 'The Evolution of E-commerce', status: 'ready', duration: '7 min', date: 'Mar 08, 2026', views: 0 },
 ];
-
-const EPISODES = [];
 
 /* ─── Color map ──────────────────────────────────── */
 const colorMap = {
     teal: { bg: 'bg-teal-50', icon: 'text-[#0D9488]', ring: 'ring-teal-100' },
-    emerald: { bg: 'bg-emerald-50', icon: 'text-emerald-500', ring: 'ring-emerald-100' },
     amber: { bg: 'bg-amber-50', icon: 'text-amber-500', ring: 'ring-amber-100' },
     violet: { bg: 'bg-violet-50', icon: 'text-violet-500', ring: 'ring-violet-100' },
+    emerald: { bg: 'bg-emerald-50', icon: 'text-emerald-600', ring: 'ring-emerald-100' },
 };
 
 /* ─── Status badge ───────────────────────────────── */
 const StatusBadge = ({ status }) => {
     const map = {
-        published: { label: 'Published', bg: 'bg-emerald-50', text: 'text-emerald-600', dot: 'bg-emerald-500' },
         ready: { label: 'Ready', bg: 'bg-violet-50', text: 'text-violet-600', dot: 'bg-violet-500' },
         draft: { label: 'Draft', bg: 'bg-amber-50', text: 'text-amber-600', dot: 'bg-amber-400' },
+        generating: { label: 'Generating', bg: 'bg-teal-50', text: 'text-[#0D9488]', dot: 'bg-[#0D9488]' },
     };
     const s = map[status] || map.draft;
     return (
@@ -86,6 +88,37 @@ const Dashboard = () => {
         .toUpperCase()
         .slice(0, 2);
 
+    const stats = [
+        {
+            label: 'Total Episodes',
+            value: EPISODES.length.toString(),
+            icon: AudioLines,
+            color: 'teal',
+            change: `${EPISODES.length} items in library`
+        },
+        {
+            label: 'Drafts',
+            value: EPISODES.filter(e => e.status === 'draft').length.toString(),
+            icon: FileText,
+            color: 'amber',
+            change: 'Refine your scripts'
+        },
+        {
+            label: 'Ready',
+            value: EPISODES.filter(e => e.status === 'ready').length.toString(),
+            icon: Zap,
+            color: 'violet',
+            change: 'Listen to finalized audio'
+        },
+        {
+            label: 'Generating',
+            value: EPISODES.filter(e => e.status === 'generating').length.toString(),
+            icon: Sparkles,
+            color: 'emerald',
+            change: 'AI is processing'
+        },
+    ];
+
     return (
         <div className="min-h-screen bg-[#F8FAFB] flex font-sans">
 
@@ -110,7 +143,7 @@ const Dashboard = () => {
                     <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 px-4 mb-2">Menu</p>
                     <SideLink icon={LayoutDashboard} label="Dashboard" active={activeNav === 'dashboard'} onClick={() => setActiveNav('dashboard')} />
                     <SideLink icon={PlusCircle} label="Create Episode" active={activeNav === 'create'} onClick={() => navigate('/create-episode')} />
-                    <SideLink icon={AudioLines} label="My Episodes" active={activeNav === 'episodes'} onClick={() => setActiveNav('episodes')} />
+                    <SideLink icon={AudioLines} label="My Episodes" active={activeNav === 'episodes'} onClick={() => navigate('/episodes')} />
                     <SideLink icon={BarChart3} label="Analytics" active={activeNav === 'analytics'} onClick={() => setActiveNav('analytics')} />
 
                     <div className="mt-auto pt-4 border-t border-slate-100 flex flex-col gap-1">
@@ -202,8 +235,8 @@ const Dashboard = () => {
                     </motion.div>
 
                     {/* ── Stats Row ── */}
-                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                        {STATS.map((stat, i) => {
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                        {stats.map((stat, i) => {
                             const c = colorMap[stat.color];
                             return (
                                 <motion.div
@@ -309,7 +342,7 @@ const Dashboard = () => {
                                 <div className="flex flex-col gap-2.5">
                                     {[
                                         { icon: PlusCircle, label: 'Create Episode', desc: 'From URL or text', accent: true, path: '/create-episode' },
-                                        { icon: AudioLines, label: 'My Episodes', desc: 'Manage library', path: '/dashboard' },
+                                        { icon: AudioLines, label: 'My Episodes', desc: 'Manage library', path: '/episodes' },
                                         { icon: BarChart3, label: 'Analytics', desc: 'Views & listens', path: '/dashboard' },
                                     ].map((action) => (
                                         <motion.button

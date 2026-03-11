@@ -146,7 +146,7 @@ const CreateEpisode = () => {
                     <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 px-4 mb-2">Menu</p>
                     <SideLink icon={LayoutDashboard} label="Dashboard" active={activeNav === 'dashboard'} onClick={() => navigate('/dashboard')} />
                     <SideLink icon={PlusCircle} label="Create Episode" active={activeNav === 'create'} onClick={() => setActiveNav('create')} />
-                    <SideLink icon={AudioLines} label="My Episodes" active={activeNav === 'episodes'} onClick={() => navigate('/dashboard')} />
+                    <SideLink icon={AudioLines} label="My Episodes" active={activeNav === 'episodes'} onClick={() => navigate('/episodes')} />
                     <SideLink icon={BarChart3} label="Analytics" active={activeNav === 'analytics'} onClick={() => navigate('/dashboard')} />
 
                     <div className="mt-auto pt-4 border-t border-slate-100 flex flex-col gap-1">
