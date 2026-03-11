@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "server.js",
   "scripts": {
-    "test": "echo \\"No tests specified\\""
+    "test": "echo \"No tests specified\""
   },
   "keywords": [],
   "author": "",
@@ -18,4 +18,3 @@
     "mongoose": "^9.3.0"
   }
 }
-
