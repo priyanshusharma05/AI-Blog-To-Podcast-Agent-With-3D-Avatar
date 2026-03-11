@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Mail, Lock, User, UserPlus } from 'lucide-react';
 import AuthLayout from '../components/layout/AuthLayout';
@@ -15,11 +15,50 @@ const Signup = () => {
         password: '',
         confirmPassword: ''
     });
+    const [errors, setErrors] = useState({});
+    const navigate = useNavigate();
+
+    const validate = () => {
+        const errs = {};
+        if (!formData.fullName.trim()) {
+            errs.fullName = 'Full name is required.';
+        } else if (formData.fullName.trim().length < 2) {
+            errs.fullName = 'Name must be at least 2 characters.';
+        }
+        if (!formData.email.trim()) {
+            errs.email = 'Email is required.';
+        } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+            errs.email = 'Please enter a valid email address.';
+        }
+        if (!formData.password) {
+            errs.password = 'Password is required.';
+        } else if (formData.password.length < 8) {
+            errs.password = 'Password must be at least 8 characters.';
+        } else if (!/(?=.*[A-Za-z])(?=.*\d)/.test(formData.password)) {
+            errs.password = 'Password must contain at least one letter and one number.';
+        }
+        if (!formData.confirmPassword) {
+            errs.confirmPassword = 'Please confirm your password.';
+        } else if (formData.confirmPassword !== formData.password) {
+            errs.confirmPassword = 'Passwords do not match.';
+        }
+        return errs;
+    };
 
     const handleSubmit = (e) => {
         e.preventDefault();
+        const errs = validate();
+        if (Object.keys(errs).length > 0) {
+            setErrors(errs);
+            return;
+        }
+        setErrors({});
         setLoading(true);
-        setTimeout(() => setLoading(false), 2000);
+        setTimeout(() => {
+            localStorage.setItem('vc_user', JSON.stringify({ name: formData.fullName, email: formData.email }));
+            setLoading(false);
+            navigate('/dashboard');
+        }, 2000);
     };
 
     const Illustration = () => (
@@ -109,20 +148,40 @@ const Signup = () => {
                     className="grid grid-cols-1 md:grid-cols-2 gap-4"
                 >
                     <motion.div initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.3 }}>
-                        <Input label="Full Name" type="text" placeholder="John Doe" icon={User} required
-                            value={formData.fullName} onChange={(e) => setFormData({ ...formData, fullName: e.target.value })} />
+                        <Input label="Full Name" type="text" placeholder="John Doe" icon={User}
+                            error={errors.fullName}
+                            value={formData.fullName}
+                            onChange={(e) => {
+                                setFormData({ ...formData, fullName: e.target.value });
+                                if (errors.fullName) setErrors((p) => ({ ...p, fullName: '' }));
+                            }} />
                     </motion.div>
                     <motion.div initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.3 }}>
-                        <Input label="Email Address" type="email" placeholder="name@company.com" icon={Mail} required
-                            value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} />
+                        <Input label="Email Address" type="email" placeholder="name@company.com" icon={Mail}
+                            error={errors.email}
+                            value={formData.email}
+                            onChange={(e) => {
+                                setFormData({ ...formData, email: e.target.value });
+                                if (errors.email) setErrors((p) => ({ ...p, email: '' }));
+                            }} />
                     </motion.div>
                     <motion.div initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.4 }}>
-                        <Input label="Password" type="password" placeholder="••••••••" icon={Lock} required
-                            value={formData.password} onChange={(e) => setFormData({ ...formData, password: e.target.value })} />
+                        <Input label="Password" type="password" placeholder="••••••••" icon={Lock}
+                            error={errors.password}
+                            value={formData.password}
+                            onChange={(e) => {
+                                setFormData({ ...formData, password: e.target.value });
+                                if (errors.password) setErrors((p) => ({ ...p, password: '' }));
+                            }} />
                     </motion.div>
                     <motion.div initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.4 }}>
-                        <Input label="Confirm Password" type="password" placeholder="••••••••" icon={Lock} required
-                            value={formData.confirmPassword} onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })} />
+                        <Input label="Confirm Password" type="password" placeholder="••••••••" icon={Lock}
+                            error={errors.confirmPassword}
+                            value={formData.confirmPassword}
+                            onChange={(e) => {
+                                setFormData({ ...formData, confirmPassword: e.target.value });
+                                if (errors.confirmPassword) setErrors((p) => ({ ...p, confirmPassword: '' }));
+                            }} />
                     </motion.div>
 
                     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }} className="md:col-span-2 pt-2">

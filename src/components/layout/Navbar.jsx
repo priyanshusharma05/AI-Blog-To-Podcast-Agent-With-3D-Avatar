@@ -113,9 +113,9 @@ const Navbar = () => {
 
                 {/* Desktop Actions */}
                 <div className="hidden md:flex items-center gap-3">
-                    <Link to="/login">
+                    <Link to="/signup">
                         <button className="text-sm font-bold text-slate-500 hover:text-[#0F172A] px-4 transition-colors">
-                            Sign In
+                            Sign Up
                         </button>
                     </Link>
                     <Link to="/login">

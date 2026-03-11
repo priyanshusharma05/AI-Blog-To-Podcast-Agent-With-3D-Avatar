@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Mail, Lock, LogIn } from 'lucide-react';
 import AuthLayout from '../components/layout/AuthLayout';
@@ -10,11 +10,41 @@ import Button from '../components/ui/Button';
 const Login = () => {
     const [loading, setLoading] = useState(false);
     const [formData, setFormData] = useState({ email: '', password: '' });
+    const [errors, setErrors] = useState({});
+    const navigate = useNavigate();
+
+    const validate = () => {
+        const errs = {};
+        if (!formData.email.trim()) {
+            errs.email = 'Email is required.';
+        } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+            errs.email = 'Please enter a valid email address.';
+        }
+        if (!formData.password) {
+            errs.password = 'Password is required.';
+        } else if (formData.password.length < 6) {
+            errs.password = 'Password must be at least 6 characters.';
+        }
+        return errs;
+    };
 
     const handleSubmit = (e) => {
         e.preventDefault();
+        const errs = validate();
+        if (Object.keys(errs).length > 0) {
+            setErrors(errs);
+            return;
+        }
+        setErrors({});
         setLoading(true);
-        setTimeout(() => setLoading(false), 2000);
+        setTimeout(() => {
+            // derive a display name from the email (e.g. "john.doe@..." → "John Doe")
+            const namePart = formData.email.split('@')[0].replace(/[._]/g, ' ');
+            const displayName = namePart.charAt(0).toUpperCase() + namePart.slice(1);
+            localStorage.setItem('vc_user', JSON.stringify({ name: displayName, email: formData.email }));
+            setLoading(false);
+            navigate('/dashboard');
+        }, 2000);
     };
 
     const Illustration = () => (
@@ -105,9 +135,12 @@ const Login = () => {
                             type="email"
                             placeholder="name@company.com"
                             icon={Mail}
-                            required
+                            error={errors.email}
                             value={formData.email}
-                            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                            onChange={(e) => {
+                                setFormData({ ...formData, email: e.target.value });
+                                if (errors.email) setErrors((p) => ({ ...p, email: '' }));
+                            }}
                         />
                     </motion.div>
 
@@ -117,9 +150,12 @@ const Login = () => {
                             type="password"
                             placeholder="••••••••"
                             icon={Lock}
-                            required
+                            error={errors.password}
                             value={formData.password}
-                            onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                            onChange={(e) => {
+                                setFormData({ ...formData, password: e.target.value });
+                                if (errors.password) setErrors((p) => ({ ...p, password: '' }));
+                            }}
                         />
                         <div className="flex justify-end">
                             <a href="#" className="text-sm text-[#0D9488] hover:text-teal-700 font-bold transition-colors">
