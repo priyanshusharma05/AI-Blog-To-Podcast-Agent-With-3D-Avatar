@@ -4,6 +4,7 @@ import Login from './pages/Login';
 import Signup from './pages/Signup';
 import Landing from './pages/Landing';
 import Dashboard from './pages/Dashboard';
+import CreateEpisode from './pages/CreateEpisode';
 
 function App() {
   return (
@@ -13,6 +14,7 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/create-episode" element={<CreateEpisode />} />
       </Routes>
     </Router>
   );

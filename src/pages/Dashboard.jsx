@@ -109,7 +109,7 @@ const Dashboard = () => {
                 <nav className="flex flex-col gap-1 flex-1">
                     <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 px-4 mb-2">Menu</p>
                     <SideLink icon={LayoutDashboard} label="Dashboard" active={activeNav === 'dashboard'} onClick={() => setActiveNav('dashboard')} />
-                    <SideLink icon={PlusCircle} label="Create Episode" active={activeNav === 'create'} onClick={() => setActiveNav('create')} />
+                    <SideLink icon={PlusCircle} label="Create Episode" active={activeNav === 'create'} onClick={() => navigate('/create-episode')} />
                     <SideLink icon={AudioLines} label="My Episodes" active={activeNav === 'episodes'} onClick={() => setActiveNav('episodes')} />
                     <SideLink icon={BarChart3} label="Analytics" active={activeNav === 'analytics'} onClick={() => setActiveNav('analytics')} />
 
@@ -193,6 +193,7 @@ const Dashboard = () => {
                         <motion.button
                             whileHover={{ scale: 1.04 }}
                             whileTap={{ scale: 0.97 }}
+                            onClick={() => navigate('/create-episode')}
                             className="shrink-0 flex items-center gap-2 bg-white text-[#0D9488] px-6 py-3 rounded-2xl font-black text-sm shadow-lg hover:shadow-xl transition-shadow"
                         >
                             <PlusCircle size={16} />
@@ -286,7 +287,10 @@ const Dashboard = () => {
 
                             {/* Create CTA footer */}
                             <div className="px-6 py-4 border-t border-slate-50 bg-slate-50/60">
-                                <button className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-dashed border-slate-200 text-slate-400 text-sm font-bold hover:border-[#0D9488] hover:text-[#0D9488] transition-all">
+                                <button
+                                    onClick={() => navigate('/create-episode')}
+                                    className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-dashed border-slate-200 text-slate-400 text-sm font-bold hover:border-[#0D9488] hover:text-[#0D9488] transition-all"
+                                >
                                     <PlusCircle size={15} />
                                     New Episode
                                 </button>
@@ -304,16 +308,17 @@ const Dashboard = () => {
                                 <h3 className="text-sm font-black text-slate-800 mb-4">Quick Actions</h3>
                                 <div className="flex flex-col gap-2.5">
                                     {[
-                                        { icon: PlusCircle, label: 'Create Episode', desc: 'From URL or text', accent: true },
-                                        { icon: AudioLines, label: 'My Episodes', desc: 'Manage library' },
-                                        { icon: BarChart3, label: 'Analytics', desc: 'Views & listens' },
+                                        { icon: PlusCircle, label: 'Create Episode', desc: 'From URL or text', accent: true, path: '/create-episode' },
+                                        { icon: AudioLines, label: 'My Episodes', desc: 'Manage library', path: '/dashboard' },
+                                        { icon: BarChart3, label: 'Analytics', desc: 'Views & listens', path: '/dashboard' },
                                     ].map((action) => (
                                         <motion.button
                                             key={action.label}
                                             whileHover={{ x: 4 }}
+                                            onClick={() => navigate(action.path)}
                                             className={`flex items-center gap-3 p-3.5 rounded-2xl border text-left transition-all group ${action.accent
-                                                    ? 'bg-teal-50 border-teal-100 hover:bg-[#0D9488] hover:border-[#0D9488]'
-                                                    : 'bg-slate-50 border-slate-100 hover:bg-slate-100'
+                                                ? 'bg-teal-50 border-teal-100 hover:bg-[#0D9488] hover:border-[#0D9488]'
+                                                : 'bg-slate-50 border-slate-100 hover:bg-slate-100'
                                                 }`}
                                         >
                                             <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${action.accent ? 'bg-[#0D9488]/10 group-hover:bg-white/20' : 'bg-white'}`}>
