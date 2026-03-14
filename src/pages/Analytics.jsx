@@ -2,8 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     LayoutDashboard, PlusCircle, AudioLines, Settings, LogOut,
-    Mic, BarChart3, TrendingUp, Users, Clock, Headphones,
-    ArrowUpRight, ArrowDownRight, Zap, Target, MousePointer2,
+    Mic, BarChart3, Video, Play, TrendingUp, Sparkles, Trophy,
     Sun, Moon, Bell, ChevronRight, Menu, X
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
@@ -24,122 +23,88 @@ const SideLink = ({ icon: Icon, label, active, onClick }) => (
 );
 
 /* ─── Metric Card ────────────────────────────────── */
-const MetricCard = ({ label, value, trend, trendValue, icon: Icon, color, description }) => {
-    const isPositive = trend === 'up';
+const MetricCard = ({ label, value, trend, icon: Icon, color, delay = 0 }) => {
+    const [isHovered, setIsHovered] = useState(false);
+    
     const colorClasses = {
-        teal: 'bg-teal-50 dark:bg-teal-500/10 text-[#0D9488] ring-teal-100 dark:ring-teal-500/20',
-        blue: 'bg-blue-50 dark:bg-blue-500/10 text-blue-600 ring-blue-100 dark:ring-blue-500/20',
-        violet: 'bg-violet-50 dark:bg-violet-500/10 text-violet-600 ring-violet-100 dark:ring-violet-500/20',
-        amber: 'bg-amber-50 dark:bg-amber-500/10 text-amber-600 ring-amber-100 dark:ring-amber-500/20',
+        teal: {
+            bg: 'bg-teal-50/50 dark:bg-teal-500/5',
+            text: 'text-[#0D9488]',
+            ring: 'ring-teal-100/50 dark:ring-teal-500/20',
+            accent: 'bg-[#0D9488]',
+            glow: 'rgba(13, 148, 136, 0.15)'
+        },
+        blue: {
+            bg: 'bg-blue-50/50 dark:bg-blue-500/5',
+            text: 'text-blue-600',
+            ring: 'ring-blue-100/50 dark:ring-blue-500/20',
+            accent: 'bg-blue-600',
+            glow: 'rgba(37, 99, 235, 0.15)'
+        },
     };
+    
+    const c = colorClasses[color];
     
     return (
         <motion.div 
-            whileHover={{ y: -4 }}
-            className="bg-white dark:bg-slate-900 p-6 rounded-[24px] border border-slate-100 dark:border-slate-800 shadow-sm group"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay }}
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseLeave={() => setIsHovered(false)}
+            whileHover={{ y: -12 }}
+            className="relative group h-full"
         >
-            <div className="flex items-center justify-between mb-4">
-                <div className={`w-10 h-10 rounded-xl flex items-center justify-center ring-4 ${colorClasses[color]}`}>
-                    <Icon size={18} />
+            {/* Background Glow Effect */}
+            <motion.div 
+                animate={{ 
+                    scale: isHovered ? 1.2 : 1,
+                    opacity: isHovered ? 0.6 : 0.4
+                }}
+                className={`absolute -inset-2 rounded-[48px] blur-2xl -z-10 transition-colors duration-500 ${isHovered ? c.bg : 'bg-transparent'}`}
+            />
+
+            <div className="h-full bg-white/70 dark:bg-slate-900/40 backdrop-blur-xl p-10 rounded-[40px] border border-white dark:border-slate-800 shadow-2xl shadow-slate-200/50 dark:shadow-none flex flex-col items-center justify-center text-center relative overflow-hidden ring-1 ring-slate-100 dark:ring-slate-800/50">
+                {/* Border Gradient Accent */}
+                <div className={`absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-transparent via-current to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700 ${c.text}`} />
+                
+                <div className={`w-24 h-24 rounded-[32px] flex items-center justify-center ring-8 mb-8 relative z-10 transition-all duration-700 group-hover:scale-110 group-hover:rotate-3 ${c.bg} ${c.text} ${c.ring}`}>
+                    {/* Progress Circle Decoration */}
+                    <svg className="absolute inset-0 w-full h-full -rotate-90 opacity-20 group-hover:opacity-40 transition-opacity">
+                        <circle cx="48" cy="48" r="44" stroke="currentColor" strokeWidth="2" fill="none" strokeDasharray="276" strokeDashoffset="60" />
+                    </svg>
+                    <Icon size={40} className="relative z-10" />
                 </div>
-                <div className={`flex items-center gap-1 text-xs font-black ${isPositive ? 'text-emerald-500' : 'text-rose-500'}`}>
-                    {isPositive ? <ArrowUpRight size={14} /> : <ArrowDownRight size={14} />}
-                    {trendValue}%
+                
+                <div className="relative z-10 space-y-3">
+                    <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.4em]">{label}</p>
+                    
+                    <div className="flex flex-col items-center">
+                        <motion.h3 
+                            className="text-6xl font-black text-slate-800 dark:text-slate-100 tracking-tighter"
+                            initial={{ scale: 0.9 }}
+                            animate={{ scale: 1 }}
+                        >
+                            {value}
+                        </motion.h3>
+                        
+                        {trend && (
+                            <motion.div 
+                                initial={{ opacity: 0, scale: 0.8 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                className="mt-4 flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-[10px] font-black uppercase tracking-widest border border-emerald-500/10"
+                            >
+                                <TrendingUp size={14} />
+                                {trend}
+                            </motion.div>
+                        )}
+                    </div>
                 </div>
+
+                {/* Mouse interaction light */}
+                <div className={`absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-1000 bg-[radial-gradient(circle_at_var(--mouse-x,50%)_var(--mouse-y,50%),${c.glow},transparent_70%)]`} />
             </div>
-            <p className="text-sm font-bold text-slate-500 dark:text-slate-400">{label}</p>
-            <h3 className="text-2xl font-black text-slate-800 dark:text-slate-100 mt-1">{value}</h3>
-            <p className="text-[10px] text-slate-400 font-medium mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                {description}
-            </p>
         </motion.div>
-    );
-};
-
-/* ─── Insights Summary ───────────────────────────── */
-const InsightsSummary = () => (
-    <motion.div 
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="bg-gradient-to-r from-teal-500 to-teal-600 rounded-[24px] p-6 text-white shadow-lg shadow-teal-500/20 flex flex-col md:flex-row items-center justify-between gap-4"
-    >
-        <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-md">
-                <Zap size={24} className="text-white" />
-            </div>
-            <div>
-                <h3 className="text-lg font-black tracking-tight">Weekly Performance Summary</h3>
-                <p className="text-teal-50 text-sm font-medium">Your audience engagement is up <span className="font-black text-white">12.5%</span> this week. Great work!</p>
-            </div>
-        </div>
-        <div className="flex items-center gap-2 text-xs font-black bg-white/10 px-4 py-2 rounded-xl backdrop-blur-md border border-white/10">
-            <TrendingUp size={14} />
-            TOP PERFORMING CONTENT
-        </div>
-    </motion.div>
-);
-
-/* ─── Mini Trend Chart ───────────────────────────── */
-// ... (TrendChart component remains the same)
-
-const TrendChart = () => {
-    const data = [30, 45, 35, 60, 55, 80, 75, 90, 85, 100];
-    const points = data.map((val, i) => `${(i * 100) / (data.length - 1)},${100 - val}`).join(' ');
-
-    return (
-        <div className="h-48 w-full relative mt-4">
-            <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="w-full h-full overflow-visible">
-                <defs>
-                    <linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#0D9488" stopOpacity="0.2" />
-                        <stop offset="100%" stopColor="#0D9488" stopOpacity="0" />
-                    </linearGradient>
-                </defs>
-                {/* Area */}
-                <motion.polyline
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ duration: 1 }}
-                    fill="url(#chartGradient)"
-                    points={`0,100 ${points} 100,100`}
-                />
-                {/* Line */}
-                <motion.polyline
-                    fill="none"
-                    stroke="#0D9488"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    points={points}
-                    initial={{ pathLength: 0 }}
-                    animate={{ pathLength: 1 }}
-                    transition={{ duration: 1.5, ease: "easeInOut" }}
-                />
-                {/* Points */}
-                {data.map((val, i) => (
-                    <motion.circle
-                        key={i}
-                        cx={(i * 100) / (data.length - 1)}
-                        cy={100 - val}
-                        r="1.5"
-                        fill="white"
-                        stroke="#0D9488"
-                        strokeWidth="1"
-                        initial={{ opacity: 0, scale: 0 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        transition={{ delay: 1 + i * 0.05 }}
-                    />
-                ))}
-            </svg>
-            
-            {/* Legend */}
-            <div className="absolute bottom-0 left-0 right-0 flex justify-between text-[10px] font-bold text-slate-400 px-1 pt-2">
-                <span>Mar 08</span>
-                <span>Mar 10</span>
-                <span>Mar 12</span>
-                <span>Mar 14</span>
-            </div>
-        </div>
     );
 };
 
@@ -297,120 +262,75 @@ const Analytics = () => {
                     </div>
                 </header>
 
-                <div className="flex-1 px-6 md:px-10 py-8 space-y-8 max-w-7xl">
-                    {/* Insights Summary */}
-                    <InsightsSummary />
+                <div className="flex-1 px-6 md:px-10 py-12 space-y-16 max-w-6xl mx-auto relative">
+                    {/* Decorative Background Mesh */}
+                    <div className="absolute top-0 left-1/4 w-[1000px] h-[1000px] bg-gradient-to-br from-teal-500/5 via-blue-500/5 to-purple-500/5 dark:from-teal-500/10 dark:via-blue-500/10 dark:to-purple-500/10 rounded-full blur-[160px] pointer-events-none -z-10 animate-pulse" />
+
+                    {/* Motivational Milestone Banner */}
+                    <motion.div 
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        className="bg-slate-900 dark:bg-slate-800 rounded-[32px] p-8 text-white relative overflow-hidden shadow-2xl group"
+                    >
+                        <div className="absolute top-0 right-0 p-8 opacity-20 group-hover:scale-110 transition-transform duration-700">
+                            <Trophy size={80} />
+                        </div>
+                        <div className="relative z-10 flex flex-col md:flex-row items-center gap-6">
+                            <div className="w-16 h-16 bg-white/10 backdrop-blur-md rounded-2xl flex items-center justify-center border border-white/10">
+                                <Sparkles className="text-teal-400" size={32} />
+                            </div>
+                            <div className="text-center md:text-left">
+                                <h2 className="text-2xl font-black tracking-tight mb-1">You're crushing your content goals!</h2>
+                                <p className="text-slate-400 text-sm font-medium">Your channel reach has improved by <span className="text-teal-400 font-bold">12.5%</span> compared to last month. Keep creating!</p>
+                            </div>
+                            <button className="md:ml-auto bg-white text-slate-900 px-8 py-3 rounded-2xl font-black text-sm hover:bg-teal-50 transition-colors">
+                                View History
+                            </button>
+                        </div>
+                    </motion.div>
 
                     {/* Metrics Grid */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                        <MetricCard label="Total Listens" value="2,842" trend="up" trendValue="12.5" icon={Headphones} color="teal" description="Total number of times your podcasts were started." />
-                        <MetricCard label="Avg. Listen Time" value="4:22" trend="up" trendValue="5.2" icon={Clock} color="blue" description="Average time spent listening to each episode." />
-                        <MetricCard label="Conversion Rate" value="38.4%" trend="down" trendValue="2.1" icon={Target} color="violet" description="People who listened after visiting from a blog URL." />
-                        <MetricCard label="Total Shares" value="428" trend="up" trendValue="18.7" icon={Users} color="amber" description="Number of times listeners shared your episodes." />
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+                        <MetricCard 
+                            label="Total Videos Created" 
+                            value="42" 
+                            trend="+5 this week"
+                            icon={Video} 
+                            color="teal" 
+                            delay={0.1}
+                        />
+                        <MetricCard 
+                            label="Total Videos Watched" 
+                            value="1.2k" 
+                            trend="+12% growth"
+                            icon={Play} 
+                            color="blue" 
+                            delay={0.2}
+                        />
                     </div>
 
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                        {/* Trend Chart Card */}
-                        <div className="lg:col-span-2 bg-white dark:bg-slate-900 p-8 rounded-[32px] border border-slate-100 dark:border-slate-800 shadow-sm">
-                            <div className="flex items-center justify-between mb-2">
-                                <div>
-                                    <h3 className="text-lg font-black text-slate-800 dark:text-slate-100">Listen Trends</h3>
-                                    <p className="text-xs text-slate-400 font-medium">Daily listens across all episodes</p>
-                                </div>
-                                <select className="bg-slate-50 dark:bg-slate-800 border-none rounded-xl text-xs font-bold text-slate-500 dark:text-slate-400 px-3 py-2 outline-none">
-                                    <option>Last 7 Days</option>
-                                    <option>Last 30 Days</option>
-                                </select>
-                            </div>
-                            <TrendChart />
+                    <div className="pt-10 flex flex-col items-center gap-6">
+                        <div className="flex items-center gap-4 text-slate-300 dark:text-slate-700">
+                            <div className="h-px w-12 bg-current opacity-20" />
+                            <p className="text-[10px] font-black uppercase tracking-[0.5em]">Real-time Insights Active</p>
+                            <div className="h-px w-12 bg-current opacity-20" />
                         </div>
-
-                        {/* Engagement Stats */}
-                        <div className="bg-[#0D9488] rounded-[32px] p-8 text-white relative overflow-hidden flex flex-col justify-between shadow-xl shadow-teal-500/10">
-                            <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16 blur-2xl" />
-                            <div className="relative z-10">
-                                <p className="text-[10px] font-black uppercase tracking-widest text-teal-100/60 mb-1">Top Trending Episode</p>
-                                <h4 className="text-lg font-black leading-tight">The Future of AI in Creative Industries</h4>
-                                <div className="mt-6 flex items-center gap-6">
-                                    <div>
-                                        <p className="text-2xl font-black">92%</p>
-                                        <p className="text-[10px] font-bold text-teal-100/60 uppercase">Completion Rate</p>
-                                    </div>
-                                    <div className="w-px h-8 bg-white/20" />
-                                    <div>
-                                        <p className="text-2xl font-black">1.2k</p>
-                                        <p className="text-[10px] font-bold text-teal-100/60 uppercase">Readers Tuned In</p>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <motion.button 
-                                whileHover={{ scale: 1.02 }}
-                                whileTap={{ scale: 0.98 }}
-                                className="mt-8 w-full bg-white text-[#0D9488] py-4 rounded-2xl font-black text-sm shadow-xl flex items-center justify-center gap-2"
-                            >
-                                <TrendingUp size={16} />
-                                View Details
-                            </motion.button>
-                        </div>
-                    </div>
-
-                    {/* Bottom Row */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        {/* Conversion Analytics */}
-                        <div className="bg-white dark:bg-slate-900 p-8 rounded-[32px] border border-slate-100 dark:border-slate-800 shadow-sm">
-                            <h3 className="text-base font-black text-slate-800 dark:text-slate-100 mb-6">Pipeline Conversion</h3>
-                            <div className="space-y-6">
-                                {[
-                                    { label: 'Blog URLs pasted', value: '1,240', percent: 100, icon: MousePointer2, color: 'text-blue-500' },
-                                    { label: 'Drafts generated', value: '842', percent: 68, icon: Zap, color: 'text-amber-500' },
-                                    { label: 'Podcasts published', value: '428', percent: 34, icon: Mic, color: 'text-[#0D9488]' }
-                                ].map((step, i) => (
-                                    <div key={i} className="relative">
-                                        <div className="flex items-center justify-between mb-2">
-                                            <div className="flex items-center gap-3">
-                                                <step.icon size={16} className={step.color} />
-                                                <span className="text-sm font-bold text-slate-600 dark:text-slate-300">{step.label}</span>
-                                            </div>
-                                            <span className="text-sm font-black text-slate-800 dark:text-slate-100">{step.value}</span>
-                                        </div>
-                                        <div className="h-2 bg-slate-50 dark:bg-slate-800 rounded-full overflow-hidden">
-                                            <motion.div 
-                                                initial={{ width: 0 }}
-                                                animate={{ width: `${step.percent}%` }}
-                                                transition={{ duration: 1, delay: 0.5 + i * 0.1 }}
-                                                className={`h-full bg-gradient-to-r from-teal-500 to-teal-300 rounded-full`}
-                                            />
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-
-                        {/* Top Channels/Referrers */}
-                        <div className="bg-white dark:bg-slate-900 p-8 rounded-[32px] border border-slate-100 dark:border-slate-800 shadow-sm">
-                            <h3 className="text-base font-black text-slate-800 dark:text-slate-100 mb-6">Audience Origins</h3>
-                            <div className="divide-y divide-slate-50 dark:divide-slate-800">
-                                {[
-                                    { origin: 'Direct Link', count: '1,420', trend: '+12%' },
-                                    { origin: 'LinkedIn', count: '840', trend: '+24%' },
-                                    { origin: 'Twitter / X', count: '320', trend: '-2%' },
-                                    { origin: 'Newsletter', count: '262', trend: '+8%' }
-                                ].map((item, i) => (
-                                    <div key={i} className="py-4 flex items-center justify-between group cursor-pointer">
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-8 h-8 rounded-lg bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-slate-400 group-hover:text-[#0D9488] transition-colors">
-                                                <ArrowUpRight size={14} />
-                                            </div>
-                                            <span className="text-sm font-bold text-slate-700 dark:text-slate-200">{item.origin}</span>
-                                        </div>
-                                        <div className="text-right">
-                                            <p className="text-sm font-black text-slate-800 dark:text-slate-100">{item.count}</p>
-                                            <p className={`text-[10px] font-bold ${item.trend.startsWith('+') ? 'text-emerald-500' : 'text-rose-500'}`}>{item.trend}</p>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
+                        <div className="flex gap-3">
+                            {[1, 2, 3, 4, 5].map((i) => (
+                                <motion.div 
+                                    key={i} 
+                                    animate={{ 
+                                        scale: [1, 1.5, 1],
+                                        opacity: [0.2, 0.5, 0.2]
+                                    }}
+                                    transition={{ 
+                                        duration: 2, 
+                                        repeat: Infinity,
+                                        delay: i * 0.4
+                                    }}
+                                    className="w-1.5 h-1.5 rounded-full bg-[#0D9488]" 
+                                />
+                            ))}
                         </div>
                     </div>
                 </div>
