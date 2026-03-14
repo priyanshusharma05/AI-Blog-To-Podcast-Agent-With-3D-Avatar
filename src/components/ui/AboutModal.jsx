@@ -62,10 +62,25 @@ const AboutModal = ({ isOpen, onClose }) => {
                                     By leveraging state-of-the-art AI, we enable creators to effortlessly turn long-form articles into dynamic,
                                     conversational podcast episodes featuring realistic 3D avatars.
                                 </p>
-                                <div className="p-4 bg-teal-50 border border-teal-100 rounded-2xl">
-                                    <p className="font-bold text-teal-900 mb-1">Built by</p>
-                                    <p className="text-teal-700 text-base">Mohammad Afzal Malik</p>
-                                    <p className="text-teal-600/80 text-xs mt-1">Creator & Lead Developer</p>
+                                <div className="space-y-4 p-5 bg-teal-50 border border-teal-100 rounded-3xl">
+                                    <p className="font-black text-[#0D9488] uppercase text-[10px] tracking-widest px-1">Meet the Team</p>
+                                    
+                                    <div className="space-y-4">
+                                        <div className="flex flex-col">
+                                            <p className="text-slate-800 font-bold text-base">Mohammad Afzal Malik</p>
+                                            <p className="text-slate-400 text-xs font-bold uppercase tracking-tight mt-0.5">Frontend and Deployment</p>
+                                        </div>
+                                        
+                                        <div className="flex flex-col">
+                                            <p className="text-slate-800 font-bold text-base">Abhishek Shingh</p>
+                                            <p className="text-slate-400 text-xs font-bold uppercase tracking-tight mt-0.5">Backend & System Integration</p>
+                                        </div>
+
+                                        <div className="flex flex-col">
+                                            <p className="text-slate-800 font-bold text-base">Priyanshu Sharma</p>
+                                            <p className="text-slate-400 text-xs font-bold uppercase tracking-tight mt-0.5">ML Model & Maintenance</p>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
 
