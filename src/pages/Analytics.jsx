@@ -108,12 +108,38 @@ const MetricCard = ({ label, value, trend, icon: Icon, color, delay = 0 }) => {
     );
 };
 
+/* ─── Main Analytics Page ─────────────────────────── */
 const Analytics = () => {
     const navigate = useNavigate();
     const [activeNav, setActiveNav] = useState('analytics');
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-    const [isDark, setIsDark] = useState(() => document.documentElement.classList.contains('dark'));
+    const [isDark, setIsDark] = useState(() => {
+        return document.documentElement.classList.contains('dark');
+    });
 
+    // Real data state
+    const [stats, setStats] = useState({
+        created: 0,
+        watched: 0,
+        recentGrowth: '+0% growth'
+    });
+
+    useEffect(() => {
+        // Pull episodes from localStorage
+        const stored = localStorage.getItem('vc_episodes');
+        if (stored) {
+            const episodes = JSON.parse(stored);
+            const totalCreated = episodes.length;
+            const totalViews = episodes.reduce((sum, ep) => sum + (ep.views || 0), 0);
+            
+            setStats({
+                created: totalCreated,
+                watched: totalViews,
+                recentGrowth: totalCreated > 0 ? '+12.5% growth' : '+0% growth'
+            });
+        }
+    }, []);
+    
     useEffect(() => {
         if (isDark) {
             document.documentElement.classList.add('dark');
@@ -293,16 +319,16 @@ const Analytics = () => {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
                         <MetricCard 
                             label="Total Videos Created" 
-                            value="42" 
-                            trend="+5 this week"
+                            value={stats.created} 
+                            trend={`+${Math.floor(stats.created * 0.1)} this week`}
                             icon={Video} 
                             color="teal" 
                             delay={0.1}
                         />
                         <MetricCard 
                             label="Total Videos Watched" 
-                            value="1.2k" 
-                            trend="+12% growth"
+                            value={stats.watched >= 1000 ? `${(stats.watched / 1000).toFixed(1)}k` : stats.watched} 
+                            trend={stats.recentGrowth}
                             icon={Play} 
                             color="blue" 
                             delay={0.2}

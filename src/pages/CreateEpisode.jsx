@@ -144,7 +144,28 @@ const CreateEpisode = () => {
         e.preventDefault();
         if (!canGenerate) return;
         setStatus('generating');
-        setTimeout(() => setStatus('done'), 3000);
+        
+        // Simulate generation then save to localStorage
+        setTimeout(() => {
+            const stored = localStorage.getItem('vc_episodes');
+            const episodes = stored ? JSON.parse(stored) : [];
+            
+            const newEpisode = {
+                id: Date.now(),
+                title: title || 'Untitled AI Episode',
+                desc: inputMode === 'url' ? `Generated from: ${blogUrl}` : pasteText.slice(0, 80) + '...',
+                status: 'ready',
+                date: new Date().toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: '2-digit' }),
+                duration: '3 min',
+                views: 0,
+                tags: ['AI', 'Generated']
+            };
+            
+            const updated = [newEpisode, ...episodes];
+            localStorage.setItem('vc_episodes', JSON.stringify(updated));
+            
+            setStatus('done');
+        }, 3000);
     };
 
     return (

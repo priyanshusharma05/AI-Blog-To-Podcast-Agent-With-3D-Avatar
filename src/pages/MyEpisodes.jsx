@@ -154,7 +154,28 @@ const MyEpisodes = () => {
         .toUpperCase()
         .slice(0, 2);
 
-    const filteredEpisodes = DUMMY_EPISODES.filter(ep => {
+    const [episodes, setEpisodes] = useState([]);
+
+    useEffect(() => {
+        const storedEpisodes = localStorage.getItem('vc_episodes');
+        if (storedEpisodes) {
+            setEpisodes(JSON.parse(storedEpisodes));
+        } else {
+            localStorage.setItem('vc_episodes', JSON.stringify(DUMMY_EPISODES));
+            setEpisodes(DUMMY_EPISODES);
+        }
+    }, []);
+
+    const handlePlayEpisode = (id) => {
+        const updated = episodes.map(ep => {
+            if (ep.id === id) return { ...ep, views: (ep.views || 0) + 1 };
+            return ep;
+        });
+        setEpisodes(updated);
+        localStorage.setItem('vc_episodes', JSON.stringify(updated));
+    };
+
+    const filteredEpisodes = episodes.filter(ep => {
         const matchesFilter = filter === 'All' || ep.status.toLowerCase() === filter.toLowerCase();
         const matchesSearch = ep.title.toLowerCase().includes(search.toLowerCase()) ||
             ep.desc.toLowerCase().includes(search.toLowerCase());
@@ -443,7 +464,10 @@ const MyEpisodes = () => {
                                             </button>
                                         </div>
 
-                                        <div className="absolute top-[170px] right-6 opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0 transition-all">
+                                        <div 
+                                            onClick={() => handlePlayEpisode(ep.id)}
+                                            className="absolute top-[170px] right-6 opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0 transition-all cursor-pointer"
+                                        >
                                             <button className="w-10 h-10 rounded-2xl bg-teal-500 text-white flex items-center justify-center shadow-lg shadow-teal-500/40">
                                                 <Play size={18} fill="currentColor" />
                                             </button>

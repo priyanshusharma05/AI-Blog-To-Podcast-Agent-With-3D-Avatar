@@ -109,31 +109,55 @@ const Dashboard = () => {
         .toUpperCase()
         .slice(0, 2);
 
+    const [episodes, setEpisodes] = useState([]);
+
+    useEffect(() => {
+        const storedEpisodes = localStorage.getItem('vc_episodes');
+        if (storedEpisodes) {
+            setEpisodes(JSON.parse(storedEpisodes));
+        } else {
+            // Initial dummy data if nothing exists
+            localStorage.setItem('vc_episodes', JSON.stringify(EPISODES));
+            setEpisodes(EPISODES);
+        }
+    }, []);
+
+    const handlePlayEpisode = (id) => {
+        const updatedEpisodes = episodes.map(ep => {
+            if (ep.id === id) {
+                return { ...ep, views: (ep.views || 0) + 1 };
+            }
+            return ep;
+        });
+        setEpisodes(updatedEpisodes);
+        localStorage.setItem('vc_episodes', JSON.stringify(updatedEpisodes));
+    };
+
     const stats = [
         {
             label: 'Total Episodes',
-            value: EPISODES.length.toString(),
+            value: episodes.length.toString(),
             icon: AudioLines,
             color: 'teal',
-            change: `${EPISODES.length} items in library`
+            change: `${episodes.length} items in library`
         },
         {
             label: 'Drafts',
-            value: EPISODES.filter(e => e.status === 'draft').length.toString(),
+            value: episodes.filter(e => e.status === 'draft').length.toString(),
             icon: FileText,
             color: 'amber',
             change: 'Refine your scripts'
         },
         {
             label: 'Ready',
-            value: EPISODES.filter(e => e.status === 'ready').length.toString(),
+            value: episodes.filter(e => e.status === 'ready').length.toString(),
             icon: Zap,
             color: 'violet',
             change: 'Listen to finalized audio'
         },
         {
             label: 'Generating',
-            value: EPISODES.filter(e => e.status === 'generating').length.toString(),
+            value: episodes.filter(e => e.status === 'generating').length.toString(),
             icon: Sparkles,
             color: 'emerald',
             change: 'AI is processing'
@@ -370,7 +394,7 @@ const Dashboard = () => {
                             </div>
 
                             <div>
-                                {EPISODES.length === 0 ? (
+                                {episodes.length === 0 ? (
                                     <div className="flex flex-col items-center justify-center py-14 px-6 text-center">
                                         <div className="w-14 h-14 rounded-2xl bg-teal-50 dark:bg-teal-500/10 border border-teal-100 dark:border-teal-500/20 flex items-center justify-center mb-4">
                                             <AudioLines size={24} className="text-[#0D9488]" />
@@ -380,12 +404,13 @@ const Dashboard = () => {
                                     </div>
                                 ) : (
                                     <div className="divide-y divide-slate-50 dark:divide-slate-800">
-                                        {EPISODES.map((ep, i) => (
+                                        {episodes.slice(0, 5).map((ep, i) => (
                                             <motion.div
                                                 key={ep.id}
                                                 initial={{ opacity: 0, x: -8 }}
                                                 animate={{ opacity: 1, x: 0 }}
                                                 transition={{ delay: 0.4 + i * 0.08 }}
+                                                onClick={() => handlePlayEpisode(ep.id)}
                                                 className="flex items-center gap-4 px-6 py-4 hover:bg-slate-50/70 dark:hover:bg-slate-800/50 transition-colors group cursor-pointer"
                                             >
                                                 <div className="w-10 h-10 rounded-xl bg-teal-50 dark:bg-teal-500/10 border border-teal-100 dark:border-teal-500/20 flex items-center justify-center shrink-0 group-hover:bg-[#0D9488] transition-colors">
