@@ -163,7 +163,7 @@ const CreateEpisode = () => {
                     <SideLink icon={LayoutDashboard} label="Dashboard" active={activeNav === 'dashboard'} onClick={() => navigate('/dashboard')} />
                     <SideLink icon={PlusCircle} label="Create Episode" active={activeNav === 'create'} onClick={() => setActiveNav('create')} />
                     <SideLink icon={AudioLines} label="My Episodes" active={activeNav === 'episodes'} onClick={() => navigate('/episodes')} />
-                    <SideLink icon={BarChart3} label="Analytics" active={activeNav === 'analytics'} onClick={() => navigate('/dashboard')} />
+                    <SideLink icon={BarChart3} label="Analytics" active={activeNav === 'analytics'} onClick={() => navigate('/analytics')} />
 
                     <div className="mt-auto pt-4 border-t border-slate-100 dark:border-slate-800 flex flex-col gap-1">
                         <SideLink icon={Settings} label="Settings" active={false} onClick={() => { }} />

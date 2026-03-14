@@ -162,7 +162,7 @@ const Dashboard = () => {
                     <SideLink icon={LayoutDashboard} label="Dashboard" active={activeNav === 'dashboard'} onClick={() => setActiveNav('dashboard')} />
                     <SideLink icon={PlusCircle} label="Create Episode" active={activeNav === 'create'} onClick={() => navigate('/create-episode')} />
                     <SideLink icon={AudioLines} label="My Episodes" active={activeNav === 'episodes'} onClick={() => navigate('/episodes')} />
-                    <SideLink icon={BarChart3} label="Analytics" active={activeNav === 'analytics'} onClick={() => setActiveNav('analytics')} />
+                    <SideLink icon={BarChart3} label="Analytics" active={activeNav === 'analytics'} onClick={() => navigate('/analytics')} />
 
                     <div className="mt-auto pt-4 border-t border-slate-100 dark:border-slate-800 flex flex-col gap-1">
                         <SideLink icon={Settings} label="Settings" active={activeNav === 'settings'} onClick={() => setActiveNav('settings')} />
@@ -367,7 +367,7 @@ const Dashboard = () => {
                                     {[
                                         { icon: PlusCircle, label: 'Create Episode', desc: 'From URL or text', accent: true, path: '/create-episode' },
                                         { icon: AudioLines, label: 'My Episodes', desc: 'Manage library', path: '/episodes' },
-                                        { icon: BarChart3, label: 'Analytics', desc: 'Views & listens', path: '/dashboard' },
+                                        { icon: BarChart3, label: 'Analytics', desc: 'Views & listens', path: '/analytics' },
                                     ].map((action) => (
                                         <motion.button
                                             key={action.label}

@@ -6,6 +6,7 @@ import Landing from './pages/Landing';
 import Dashboard from './pages/Dashboard';
 import CreateEpisode from './pages/CreateEpisode';
 import MyEpisodes from './pages/MyEpisodes';
+import Analytics from './pages/Analytics';
 
 function App() {
   return (
@@ -17,6 +18,7 @@ function App() {
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/create-episode" element={<CreateEpisode />} />
         <Route path="/episodes" element={<MyEpisodes />} />
+        <Route path="/analytics" element={<Analytics />} />
       </Routes>
     </Router>
   );
