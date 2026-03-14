@@ -129,9 +129,21 @@ const CreateEpisode = () => {
 
     const toggleTheme = () => setIsDark(!isDark);
 
-    const stored = localStorage.getItem('vc_user');
-    const user = stored ? JSON.parse(stored) : { name: 'Guest', email: '' };
-    const initials = (user.name || 'Guest')
+    const getUserSafely = () => {
+        try {
+            const stored = localStorage.getItem('vc_user');
+            if (stored && stored !== 'undefined' && stored !== 'null') {
+                return JSON.parse(stored);
+            }
+        } catch (err) {
+            console.error('Failed to parse user data:', err);
+        }
+        return { name: 'Guest', email: '' };
+    };
+
+    const user = getUserSafely();
+    const userName = user.name || 'Guest';
+    const initials = userName
         .split(' ')
         .map((w) => w ? w[0] : '')
         .join('')
@@ -261,7 +273,7 @@ const CreateEpisode = () => {
                         {initials}
                     </div>
                     <div className="overflow-hidden flex-1">
-                        <p className="text-sm font-bold text-slate-800 dark:text-slate-100 truncate">{user.name.split(' ')[0]}</p>
+                        <p className="text-sm font-bold text-slate-800 dark:text-slate-100 truncate">{userName.split(' ')[0]}</p>
                         <p className="text-xs text-slate-400 truncate">{user.email}</p>
                     </div>
                     <ChevronRight size={14} className="text-slate-300 group-hover:text-slate-500 dark:group-hover:text-slate-400 transition-colors" />

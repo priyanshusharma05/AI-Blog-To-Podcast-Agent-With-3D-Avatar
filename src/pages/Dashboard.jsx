@@ -1,69 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-    LayoutDashboard,
-    PlusCircle,
-    AudioLines,
-    Settings,
-    LogOut,
-    Mic,
-    Sparkles,
-    Play,
-    Clock,
-    CheckCircle2,
-    FileText,
-    ChevronRight,
-    Bell,
-    Zap,
-    BarChart3,
-    Headphones,
-    MoreHorizontal,
-    ArrowUpRight,
-    Sun,
-    Moon,
-    Menu,
-    X
+    LayoutDashboard, PlusCircle, AudioLines, Settings, LogOut,
+    Mic, Sparkles, TrendingUp, Users, Target, Play, Clock, ChevronRight,
+    Bell, BarChart3, Headphones, MoreHorizontal, ArrowUpRight,
+    CheckCircle2, Zap, FileText, Loader2, Sun, Moon, Menu, X
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useEffect } from 'react';
 
-/* ─── Stats config ───────────────────────────────── */
-const EPISODES = [
-    { id: 1, title: 'The Future of AI in Creative Industries', status: 'ready', duration: '4 min', date: 'Mar 11, 2026', views: 0 },
-    { id: 2, title: 'Remote Work Revolution: What We Learned', status: 'ready', duration: '3 min', date: 'Mar 11, 2026', views: 0 },
-    { id: 3, title: 'Understanding Blockchain Beyond Crypto', status: 'draft', duration: '4 min', date: 'Mar 11, 2026', views: 0 },
-    { id: 4, title: 'Sustainable Living: Simple Daily Habits', status: 'generating', duration: '--', date: 'Mar 12, 2026', views: 0 },
-    { id: 5, title: 'The Rise of Personal Branding', status: 'ready', duration: '5 min', date: 'Mar 10, 2026', views: 0 },
-    { id: 6, title: 'Mental Health in the Tech Industry', status: 'ready', duration: '4 min', date: 'Mar 09, 2026', views: 0 },
-    { id: 7, title: 'AI Ethics: Navigating the New Frontier', status: 'draft', duration: '6 min', date: 'Mar 12, 2026', views: 0 },
-    { id: 8, title: 'The Evolution of E-commerce', status: 'ready', duration: '7 min', date: 'Mar 08, 2026', views: 0 },
-];
-
-/* ─── Color map ──────────────────────────────────── */
-const colorMap = {
-    teal: { bg: 'bg-teal-50 dark:bg-teal-500/10', icon: 'text-[#0D9488]', ring: 'ring-teal-100 dark:ring-teal-500/20' },
-    amber: { bg: 'bg-amber-50 dark:bg-amber-500/10', icon: 'text-amber-500', ring: 'ring-amber-100 dark:ring-amber-500/20' },
-    violet: { bg: 'bg-violet-50 dark:bg-violet-500/10', icon: 'text-violet-500', ring: 'ring-violet-100 dark:ring-violet-500/20' },
-    emerald: { bg: 'bg-emerald-50 dark:bg-emerald-500/10', icon: 'text-emerald-600', ring: 'ring-emerald-100 dark:ring-emerald-500/20' },
-};
-
-/* ─── Status badge ───────────────────────────────── */
-const StatusBadge = ({ status }) => {
-    const map = {
-        ready: { label: 'Ready', bg: 'bg-violet-50 dark:bg-violet-500/10', text: 'text-violet-600 dark:text-violet-400', dot: 'bg-violet-500' },
-        draft: { label: 'Draft', bg: 'bg-amber-50 dark:bg-amber-500/10', text: 'text-amber-600 dark:text-amber-400', dot: 'bg-amber-400' },
-        generating: { label: 'Generating', bg: 'bg-teal-50 dark:bg-teal-500/10', text: 'text-[#0D9488] dark:text-teal-400', dot: 'bg-[#0D9488]' },
-    };
-    const s = map[status] || map.draft;
-    return (
-        <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold ${s.bg} ${s.text}`}>
-            <span className={`w-1.5 h-1.5 rounded-full ${s.dot}`} />
-            {s.label}
-        </span>
-    );
-};
-
-/* ─── Sidebar link ───────────────────────────────── */
+/* ─── Sidebar link (shared style) ───────────────── */
 const SideLink = ({ icon: Icon, label, active, onClick }) => (
     <button
         onClick={onClick}
@@ -78,11 +23,45 @@ const SideLink = ({ icon: Icon, label, active, onClick }) => (
     </button>
 );
 
-/* ─── Main Dashboard Component ───────────────────── */
+/* ─── Status Badge ───────────────────────────────── */
+const StatusBadge = ({ status }) => {
+    const map = {
+        ready: { label: 'Ready', bg: 'bg-emerald-50 dark:bg-emerald-400/10', text: 'text-emerald-600 dark:text-emerald-400', dot: 'bg-emerald-500' },
+        draft: { label: 'Draft', bg: 'bg-slate-100 dark:bg-slate-800', text: 'text-slate-600 dark:text-slate-400', dot: 'bg-slate-400' },
+        generating: { label: 'Generating', bg: 'bg-amber-50 dark:bg-amber-400/10', text: 'text-amber-600 dark:text-amber-400', dot: 'bg-amber-500' },
+    };
+    const s = map[status] || map.draft;
+    return (
+        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border flex items-center gap-1.5 ${s.bg} ${s.text} border-current/10`}>
+            <span className={`w-1 h-1 rounded-full ${s.dot}`} />
+            {s.label}
+        </span>
+    );
+};
+
+/* ─── Stats config ───────────────────────────────── */
+const EPISODES = [
+    { id: 1, title: 'The Future of AI in Creative Industries', desc: 'Exploring how AI is transforming creative industries from art and design to music and writing.', status: 'ready', duration: '4 min', date: 'Mar 11, 2026', views: 0, tags: ['AI', 'Tech'] },
+    { id: 2, title: 'Remote Work Revolution: What We Learned', desc: 'A deep dive into the lessons learned from the global shift to remote work and what comes next.', status: 'ready', duration: '3 min', date: 'Mar 11, 2026', views: 0, tags: ['Work', 'Remote'] },
+    { id: 3, title: 'Understanding Blockchain Beyond Crypto', desc: 'Exploring the vast potential of blockchain technology beyond cryptocurrency applications.', status: 'draft', duration: '4 min', date: 'Mar 11, 2026', views: 0, tags: ['Crypto', 'Tech'] },
+    { id: 4, title: 'Sustainable Living: Simple Daily Habits', desc: 'Small changes you can make today to live a more eco-friendly and sustainable lifestyle.', status: 'generating', duration: '--', date: 'Mar 12, 2026', views: 0, tags: ['Nature'] },
+    { id: 5, title: 'The Rise of Personal Branding', desc: 'Why personal branding is more important than ever in the digital age.', status: 'ready', duration: '5 min', date: 'Mar 10, 2026', views: 0, tags: ['Brand'] },
+    { id: 6, title: 'Mental Health in the Tech Industry', desc: 'Addressing the unique challenges and importance of mental wellness in fast-paced tech roles.', status: 'ready', duration: '4 min', date: 'Mar 09, 2026', views: 0, tags: ['Health'] },
+    { id: 7, title: 'AI Ethics: Navigating the New Frontier', desc: 'Discussing the responsibility of AI developers and common ethical dilemmas in the field.', status: 'draft', duration: '6 min', date: 'Mar 12, 2026', views: 0, tags: ['AI', 'Ethics'] },
+    { id: 8, title: 'The Evolution of E-commerce', desc: 'How digital shopping experiences have changed over the last decade.', status: 'ready', duration: '7 min', date: 'Mar 08, 2026', views: 0, tags: ['Shop'] },
+];
+
+/* ─── Color map ──────────────────────────────────── */
+const COLORS = {
+    teal: 'from-emerald-400 to-teal-500',
+    violet: 'from-violet-400 to-indigo-500',
+    amber: 'from-amber-400 to-orange-500',
+};
+
 const Dashboard = () => {
+    const navigate = useNavigate();
     const [activeNav, setActiveNav] = useState('dashboard');
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-    const navigate = useNavigate();
     const [isDark, setIsDark] = useState(() => {
         return document.documentElement.classList.contains('dark');
     });
@@ -100,9 +79,21 @@ const Dashboard = () => {
     const toggleTheme = () => setIsDark(!isDark);
 
     // Read user from localStorage (saved on login / signup)
-    const stored = localStorage.getItem('vc_user');
-    const user = stored ? JSON.parse(stored) : { name: 'Guest', email: '' };
-    const initials = (user.name || 'Guest')
+    const getUserSafely = () => {
+        try {
+            const stored = localStorage.getItem('vc_user');
+            if (stored && stored !== 'undefined' && stored !== 'null') {
+                return JSON.parse(stored);
+            }
+        } catch (err) {
+            console.error('Failed to parse user data:', err);
+        }
+        return { name: 'Guest', email: '' };
+    };
+
+    const user = getUserSafely();
+    const userName = user.name || 'Guest';
+    const initials = userName
         .split(' ')
         .map((w) => w ? w[0] : '')
         .join('')
@@ -112,14 +103,24 @@ const Dashboard = () => {
     const [episodes, setEpisodes] = useState([]);
 
     useEffect(() => {
-        const storedEpisodes = localStorage.getItem('vc_episodes');
-        if (storedEpisodes) {
-            setEpisodes(JSON.parse(storedEpisodes));
-        } else {
-            // Initial dummy data if nothing exists
+        const loadEpisodes = () => {
+            try {
+                const storedEpisodes = localStorage.getItem('vc_episodes');
+                if (storedEpisodes && storedEpisodes !== 'undefined' && storedEpisodes !== 'null') {
+                    const parsed = JSON.parse(storedEpisodes);
+                    if (Array.isArray(parsed)) {
+                        setEpisodes(parsed);
+                        return;
+                    }
+                }
+            } catch (err) {
+                console.error('Failed to load episodes:', err);
+            }
+            // Fallback to dummy data mapping if parsing fails or no data
             localStorage.setItem('vc_episodes', JSON.stringify(EPISODES));
             setEpisodes(EPISODES);
-        }
+        };
+        loadEpisodes();
     }, []);
 
     const handlePlayEpisode = (id) => {
@@ -131,38 +132,12 @@ const Dashboard = () => {
         });
         setEpisodes(updatedEpisodes);
         localStorage.setItem('vc_episodes', JSON.stringify(updatedEpisodes));
+        
+        const ep = updatedEpisodes.find(e => e.id === id);
+        if (ep) {
+            alert(`Playing: ${ep.title}`);
+        }
     };
-
-    const stats = [
-        {
-            label: 'Total Episodes',
-            value: episodes.length.toString(),
-            icon: AudioLines,
-            color: 'teal',
-            change: `${episodes.length} items in library`
-        },
-        {
-            label: 'Drafts',
-            value: episodes.filter(e => e.status === 'draft').length.toString(),
-            icon: FileText,
-            color: 'amber',
-            change: 'Refine your scripts'
-        },
-        {
-            label: 'Ready',
-            value: episodes.filter(e => e.status === 'ready').length.toString(),
-            icon: Zap,
-            color: 'violet',
-            change: 'Listen to finalized audio'
-        },
-        {
-            label: 'Generating',
-            value: episodes.filter(e => e.status === 'generating').length.toString(),
-            icon: Sparkles,
-            color: 'emerald',
-            change: 'AI is processing'
-        },
-    ];
 
     return (
         <div className="min-h-screen bg-[#F8FAFB] dark:bg-slate-950 flex font-sans transition-colors duration-300">
@@ -170,8 +145,7 @@ const Dashboard = () => {
             {/* ─── MOBILE SIDEBAR (DRAWER) ─── */}
             <AnimatePresence>
                 {isMobileMenuOpen && (
-                    <>
-                        {/* Backdrop */}
+                    <React.Fragment key="mobile-sidebar">
                         <motion.div
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
@@ -179,8 +153,6 @@ const Dashboard = () => {
                             onClick={() => setIsMobileMenuOpen(false)}
                             className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[40] lg:hidden"
                         />
-                        
-                        {/* Drawer */}
                         <motion.aside
                             initial={{ x: '-100%' }}
                             animate={{ x: 0 }}
@@ -213,19 +185,17 @@ const Dashboard = () => {
                                 <SideLink icon={BarChart3} label="Analytics" active={activeNav === 'analytics'} onClick={() => { navigate('/analytics'); setIsMobileMenuOpen(false); }} />
 
                                 <div className="mt-auto pt-4 border-t border-slate-100 dark:border-slate-800 flex flex-col gap-1">
-                                    <SideLink icon={Settings} label="Settings" active={activeNav === 'settings'} onClick={() => { navigate('/settings'); setIsMobileMenuOpen(false); }} />
+                                    <SideLink icon={Settings} label="Settings" active={false} onClick={() => { navigate('/settings'); setIsMobileMenuOpen(false); }} />
                                     <SideLink icon={LogOut} label="Logout" active={false} onClick={() => { localStorage.removeItem('vc_user'); navigate('/'); }} />
                                 </div>
                             </nav>
                         </motion.aside>
-                    </>
+                    </React.Fragment>
                 )}
             </AnimatePresence>
 
             {/* ─── SIDEBAR ─── */}
             <aside className="w-64 shrink-0 hidden lg:flex flex-col bg-white dark:bg-slate-900 border-r border-slate-100 dark:border-slate-800 min-h-screen fixed left-0 top-0 bottom-0 z-30 px-4 py-6">
-
-                {/* Brand */}
                 <Link to="/" className="flex items-center gap-2.5 px-2 mb-8 group">
                     <div className="w-9 h-9 bg-[#0D9488] rounded-xl flex items-center justify-center shadow-md shadow-teal-200">
                         <Mic size={16} className="text-white" />
@@ -238,7 +208,6 @@ const Dashboard = () => {
                     </div>
                 </Link>
 
-                {/* Nav */}
                 <nav className="flex flex-col gap-1 flex-1">
                     <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 px-4 mb-2">Menu</p>
                     <SideLink icon={LayoutDashboard} label="Dashboard" active={activeNav === 'dashboard'} onClick={() => setActiveNav('dashboard')} />
@@ -247,12 +216,11 @@ const Dashboard = () => {
                     <SideLink icon={BarChart3} label="Analytics" active={activeNav === 'analytics'} onClick={() => navigate('/analytics')} />
 
                     <div className="mt-auto pt-4 border-t border-slate-100 dark:border-slate-800 flex flex-col gap-1">
-                        <SideLink icon={Settings} label="Settings" active={activeNav === 'settings'} onClick={() => navigate('/settings')} />
+                        <SideLink icon={Settings} label="Settings" active={false} onClick={() => navigate('/settings')} />
                         <SideLink icon={LogOut} label="Logout" active={false} onClick={() => { localStorage.removeItem('vc_user'); navigate('/'); }} />
                     </div>
                 </nav>
 
-                {/* User chip */}
                 <div 
                     onClick={() => navigate('/settings')}
                     className="mt-6 flex items-center gap-3 px-3 py-3 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-800 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors group"
@@ -261,8 +229,8 @@ const Dashboard = () => {
                         {initials}
                     </div>
                     <div className="overflow-hidden flex-1">
-                        <p className="text-sm font-bold text-slate-800 dark:text-slate-100 truncate">{user.name.split(' ')[0]}</p>
-                        <p className="text-xs text-slate-400 truncate">{user.email}</p>
+                        <p className="text-sm font-bold text-slate-800 dark:text-slate-100 truncate">{(user.name || 'Guest').split(' ')[0]}</p>
+                        <p className="text-xs text-slate-400 truncate">{user.email || ''}</p>
                     </div>
                     <ChevronRight size={14} className="text-slate-300 group-hover:text-slate-500 dark:group-hover:text-slate-400 transition-colors" />
                 </div>
@@ -274,16 +242,15 @@ const Dashboard = () => {
                 {/* Top bar */}
                 <header className="sticky top-0 z-20 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-100 dark:border-slate-800 px-6 md:px-10 py-4 flex items-center justify-between">
                     <div className="flex items-center gap-4">
-                        {/* Mobile Menu Toggle */}
                         <button
                             onClick={() => setIsMobileMenuOpen(true)}
-                            className="lg:hidden p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400"
+                            className="lg:hidden p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-500"
                         >
                             <Menu size={20} />
                         </button>
                         <div>
-                            <h1 className="text-lg font-black text-slate-800 dark:text-slate-100 tracking-tight">Dashboard</h1>
-                            <p className="text-xs text-slate-400 font-medium">Welcome back, {user.name.split(' ')[0]} 👋</p>
+                            <h1 className="text-lg font-black text-slate-800 dark:text-slate-100 tracking-tight">Welcome back, {userName.split(' ')[0]}!</h1>
+                            <p className="text-xs text-slate-400 font-medium">Here's your podcasting overview for today.</p>
                         </div>
                     </div>
                     <div className="flex items-center gap-3">
@@ -295,7 +262,6 @@ const Dashboard = () => {
                         </button>
                         <button className="relative w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
                             <Bell size={16} />
-                            <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-[#0D9488]" />
                         </button>
                         <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#0D9488] to-teal-300 flex items-center justify-center text-white text-xs font-black cursor-pointer">
                             {initials}
@@ -303,77 +269,37 @@ const Dashboard = () => {
                     </div>
                 </header>
 
-                {/* Page Body */}
-                <div className="flex-1 px-6 md:px-10 py-8 space-y-8 max-w-6xl w-full">
-
-                    {/* ── Hero Welcome Banner ── */}
-                    <motion.div
-                        initial={{ opacity: 0, y: 16 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.5 }}
-                        className="relative overflow-hidden bg-[#0D9488] rounded-[28px] px-8 md:px-12 py-9 flex flex-col md:flex-row items-start md:items-center justify-between gap-6"
-                    >
-                        {/* decorative rings */}
-                        <div className="absolute -right-20 -top-20 w-72 h-72 rounded-full border border-white/10 pointer-events-none" />
-                        <div className="absolute -right-8 -top-8 w-48 h-48 rounded-full border border-white/10 pointer-events-none" />
-                        <div className="absolute right-24 bottom-0 w-24 h-24 rounded-full bg-white/5 pointer-events-none" />
-
-                        {/* Animated avatar/icon */}
-                        <div className="relative shrink-0 hidden sm:block">
-                            <div className="absolute inset-0 bg-white/20 blur-2xl rounded-full" />
-                            <motion.div
-                                animate={{ y: [0, -8, 0] }}
-                                transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
-                                className="relative w-20 h-20 rounded-3xl bg-white/15 border border-white/25 flex items-center justify-center backdrop-blur-sm"
-                            >
-                                <Mic size={36} className="text-white" />
-                            </motion.div>
-                        </div>
-
-                        <div className="flex-1">
-                            <span className="inline-flex items-center gap-1.5 bg-white/15 border border-white/20 text-white text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full mb-3">
-                                <Sparkles size={10} /> AI-Powered
-                            </span>
-                            <h2 className="text-2xl md:text-3xl font-black text-white tracking-tight leading-tight mb-2">
-                                Blog to Podcast<br />in Seconds
-                            </h2>
-                            <p className="text-teal-100 text-sm font-medium max-w-md">
-                                Transform any blog post into an engaging podcast episode with our AI agent and interactive 3D avatar.
-                            </p>
-                        </div>
-
-                        <motion.button
-                            whileHover={{ scale: 1.04 }}
-                            whileTap={{ scale: 0.97 }}
-                            onClick={() => navigate('/create-episode')}
-                            className="shrink-0 flex items-center gap-2 bg-white text-[#0D9488] px-6 py-3 rounded-2xl font-black text-sm shadow-lg hover:shadow-xl transition-shadow"
-                        >
-                            <PlusCircle size={16} />
-                            Create Your First Episode
-                        </motion.button>
-                    </motion.div>
+                <div className="flex-1 px-6 md:px-10 py-8 overflow-y-auto">
 
                     {/* ── Stats Row ── */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                        {stats.map((stat, i) => {
-                            const c = colorMap[stat.color];
-                            return (
-                                <motion.div
-                                    key={stat.label}
-                                    initial={{ opacity: 0, y: 12 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    transition={{ delay: 0.1 + i * 0.07 }}
-                                    className="bg-white dark:bg-slate-900 rounded-[20px] border border-slate-100 dark:border-slate-800 p-5 shadow-sm hover:shadow-md transition-shadow group"
-                                >
-                                    <div className={`w-10 h-10 ${c.bg} ring-4 ${c.ring} rounded-2xl flex items-center justify-center mb-4`}>
-                                        <stat.icon size={18} className={c.icon} />
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+                        {[
+                            { label: 'Total Episodes', value: (episodes || []).length, icon: AudioLines, trend: '+2 this week', color: 'teal' },
+                            { label: 'Total Listens', value: (episodes || []).reduce((acc, ep) => acc + (ep.views || 0), 0), icon: Headphones, trend: '+12.5%', color: 'violet' },
+                            { label: 'AI Generative time', value: '42m', icon: Zap, trend: '-3m faster', color: 'amber' },
+                        ].map((stat, i) => (
+                            <motion.div
+                                key={stat.label}
+                                initial={{ opacity: 0, y: 12 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: i * 0.1 }}
+                                className="bg-white dark:bg-slate-900 rounded-[28px] p-6 border border-slate-100 dark:border-slate-800 shadow-sm relative overflow-hidden group"
+                            >
+                                <div className="flex justify-between items-start relative z-10">
+                                    <div>
+                                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">{stat.label}</p>
+                                        <h3 className="text-2xl font-black text-slate-800 dark:text-slate-100">{stat.value}</h3>
+                                        <div className="flex items-center gap-1 mt-2">
+                                            <span className="text-[10px] font-bold text-emerald-500">{stat.trend}</span>
+                                        </div>
                                     </div>
-                                    <p className="text-3xl font-black text-slate-800 dark:text-slate-100 tracking-tight">{stat.value}</p>
-                                    <p className="text-sm font-bold text-slate-500 dark:text-slate-400 mt-0.5">{stat.label}</p>
-                                    <p className="text-xs text-slate-400 dark:text-slate-500 font-medium mt-1">{stat.change}</p>
-                                </motion.div>
-                            );
-                        })}
+                                    <div className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${COLORS[stat.color]} flex items-center justify-center text-white shadow-lg`}>
+                                        <stat.icon size={20} />
+                                    </div>
+                                </div>
+                                <div className="absolute -right-4 -bottom-4 w-24 h-24 bg-slate-50 dark:bg-slate-800/10 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-700" />
+                            </motion.div>
+                        ))}
                     </div>
 
                     {/* ── Episodes Table + Quick Actions ── */}
@@ -388,13 +314,16 @@ const Dashboard = () => {
                         >
                             <div className="px-6 py-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
                                 <h3 className="text-base font-black text-slate-800 dark:text-slate-100">Recent Episodes</h3>
-                                <button className="text-xs font-bold text-[#0D9488] hover:underline flex items-center gap-1">
+                                <button 
+                                    onClick={() => navigate('/episodes')}
+                                    className="text-xs font-bold text-[#0D9488] hover:underline flex items-center gap-1"
+                                >
                                     View all <ChevronRight size={12} />
                                 </button>
                             </div>
 
                             <div>
-                                {episodes.length === 0 ? (
+                                {(episodes || []).length === 0 ? (
                                     <div className="flex flex-col items-center justify-center py-14 px-6 text-center">
                                         <div className="w-14 h-14 rounded-2xl bg-teal-50 dark:bg-teal-500/10 border border-teal-100 dark:border-teal-500/20 flex items-center justify-center mb-4">
                                             <AudioLines size={24} className="text-[#0D9488]" />
@@ -404,7 +333,7 @@ const Dashboard = () => {
                                     </div>
                                 ) : (
                                     <div className="divide-y divide-slate-50 dark:divide-slate-800">
-                                        {episodes.slice(0, 5).map((ep, i) => (
+                                        {(episodes || []).slice(0, 5).map((ep, i) => (
                                             <motion.div
                                                 key={ep.id}
                                                 initial={{ opacity: 0, x: -8 }}
@@ -417,15 +346,15 @@ const Dashboard = () => {
                                                     <Play size={14} className="text-[#0D9488] group-hover:text-white transition-colors" />
                                                 </div>
                                                 <div className="flex-1 min-w-0">
-                                                    <p className="text-sm font-bold text-slate-800 dark:text-slate-100 truncate">{ep.title}</p>
+                                                    <p className="text-sm font-bold text-slate-800 dark:text-slate-100 truncate">{ep.title || 'Untitled'}</p>
                                                     <div className="flex items-center gap-3 mt-0.5">
-                                                        <span className="text-xs text-slate-400 dark:text-slate-500 flex items-center gap-1"><Clock size={10} /> {ep.duration}</span>
-                                                        <span className="text-xs text-slate-400 dark:text-slate-500">{ep.date}</span>
+                                                        <span className="text-xs text-slate-400 dark:text-slate-500 flex items-center gap-1"><Clock size={10} /> {ep.duration || '--'}</span>
+                                                        <span className="text-xs text-slate-400 dark:text-slate-500">{ep.date || ''}</span>
                                                     </div>
                                                 </div>
                                                 <div className="flex items-center gap-3 shrink-0">
                                                     <StatusBadge status={ep.status} />
-                                                    {ep.views > 0 && (
+                                                    {(ep.views || 0) > 0 && (
                                                         <span className="text-xs text-slate-400 dark:text-slate-500 flex items-center gap-1 font-medium"><Headphones size={11} /> {ep.views}</span>
                                                     )}
                                                     <button className="w-7 h-7 rounded-lg flex items-center justify-center text-slate-300 dark:text-slate-600 hover:text-slate-500 dark:hover:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
@@ -461,9 +390,9 @@ const Dashboard = () => {
                                 <h3 className="text-sm font-black text-slate-800 dark:text-slate-100 mb-4">Quick Actions</h3>
                                 <div className="flex flex-col gap-2.5">
                                     {[
-                                        { icon: PlusCircle, label: 'Create Episode', desc: 'From URL or text', accent: true, path: '/create-episode' },
-                                        { icon: AudioLines, label: 'My Episodes', desc: 'Manage library', path: '/episodes' },
-                                        { icon: BarChart3, label: 'Analytics', desc: 'Views & listens', path: '/analytics' },
+                                        { icon: PlusCircle, label: 'Create Episode', desc: 'From URL or text', accent: true, path: '/create-episode', color: 'teal' },
+                                        { icon: AudioLines, label: 'My Episodes', desc: 'Manage library', path: '/episodes', color: 'slate' },
+                                        { icon: BarChart3, label: 'Analytics', desc: 'Views & listens', path: '/analytics', color: 'slate' },
                                     ].map((action) => (
                                         <motion.button
                                             key={action.label}
@@ -477,14 +406,25 @@ const Dashboard = () => {
                                             <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${action.accent ? 'bg-[#0D9488]/10 group-hover:bg-white/20' : 'bg-white dark:bg-slate-800'}`}>
                                                 <action.icon size={15} className={action.accent ? 'text-[#0D9488] group-hover:text-white' : 'text-slate-400 dark:text-slate-500'} />
                                             </div>
-                                            <div>
-                                                <p className={`text-sm font-bold ${action.accent ? 'text-slate-800 dark:text-slate-100 group-hover:text-white' : 'text-slate-700 dark:text-slate-200'}`}>{action.label}</p>
-                                                <p className={`text-xs font-medium ${action.accent ? 'text-teal-600 dark:text-teal-500 group-hover:text-teal-100' : 'text-slate-400 dark:text-slate-500'}`}>{action.desc}</p>
+                                            <div className="flex-1 min-w-0">
+                                                <p className={`text-xs font-black ${action.accent ? 'text-[#0D9488] group-hover:text-white' : 'text-slate-800 dark:text-slate-100'}`}>{action.label}</p>
+                                                <p className={`text-[10px] font-medium ${action.accent ? 'text-[#0D9488]/60 group-hover:text-white/70' : 'text-slate-400'}`}>{action.desc}</p>
                                             </div>
-                                            <ArrowUpRight size={13} className={`ml-auto opacity-0 group-hover:opacity-100 transition-opacity ${action.accent ? 'text-white' : 'text-slate-400 dark:text-slate-500'}`} />
+                                            <ArrowUpRight size={14} className={action.accent ? 'text-[#0D9488]/40 group-hover:text-white' : 'text-slate-300 group-hover:text-slate-500'} />
                                         </motion.button>
                                     ))}
                                 </div>
+                            </div>
+
+                            <div className="bg-white dark:bg-slate-900 rounded-[24px] border border-slate-100 dark:border-slate-800 shadow-sm p-6 relative overflow-hidden">
+                                <div className="relative z-10">
+                                    <h3 className="text-sm font-black text-slate-800 dark:text-slate-100 mb-1">PRO Plan</h3>
+                                    <p className="text-xs text-slate-400 font-medium mb-4">Unlimited AI voices & clones</p>
+                                    <button className="w-full py-2.5 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-xs font-black hover:bg-slate-800 dark:hover:bg-slate-100 transition-colors">
+                                        Upgrade Now
+                                    </button>
+                                </div>
+                                <div className="absolute top-0 right-0 w-24 h-24 bg-teal-500/5 rounded-full -translate-y-1/2 translate-x-1/2" />
                             </div>
                         </motion.div>
                     </div>

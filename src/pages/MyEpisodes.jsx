@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     LayoutDashboard, PlusCircle, AudioLines, Settings, LogOut,
@@ -7,7 +7,6 @@ import {
     CheckCircle2, Zap, FileText, Loader2, Sun, Moon, Menu, X
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useEffect } from 'react';
 
 /* ─── Sidebar link (shared style) ───────────────── */
 const SideLink = ({ icon: Icon, label, active, onClick }) => (
@@ -27,14 +26,14 @@ const SideLink = ({ icon: Icon, label, active, onClick }) => (
 /* ─── Status Badge (refactored for grid cards) ─── */
 const StatusBadge = ({ status }) => {
     const map = {
-        ready: { label: 'Ready', bg: 'bg-emerald-500/10', text: 'text-emerald-500', dot: 'bg-emerald-500' },
-        draft: { label: 'Draft', bg: 'bg-slate-500/10', text: 'text-slate-400', dot: 'bg-slate-400' },
-        generating: { label: 'Generating', bg: 'bg-teal-500/10', text: 'text-teal-400', dot: 'bg-teal-500' },
+        ready: { label: 'Ready', bg: 'bg-violet-50 dark:bg-violet-500/10', text: 'text-violet-600 dark:text-violet-400', dot: 'bg-violet-500' },
+        draft: { label: 'Draft', bg: 'bg-amber-50 dark:bg-amber-500/10', text: 'text-amber-600 dark:text-amber-400', dot: 'bg-amber-400' },
+        generating: { label: 'Generating', bg: 'bg-teal-50 dark:bg-teal-500/10', text: 'text-[#0D9488] dark:text-teal-400', dot: 'bg-[#0D9488]' },
     };
     const s = map[status] || map.draft;
     return (
-        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${s.bg} ${s.text}`}>
-            <span className={`w-1 h-1 rounded-full ${s.dot} ${status === 'generating' ? 'animate-pulse' : ''}`} />
+        <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${s.bg} ${s.text}`}>
+            <span className={`w-1.5 h-1.5 rounded-full ${s.dot} ${status === 'generating' ? 'animate-pulse' : ''}`} />
             {s.label}
         </span>
     );
@@ -124,6 +123,7 @@ const DUMMY_EPISODES = [
 ];
 
 const MyEpisodes = () => {
+    console.log('MyEpisodes: Rendering...');
     const navigate = useNavigate();
     const [activeNav, setActiveNav] = useState('episodes');
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -134,6 +134,7 @@ const MyEpisodes = () => {
     });
 
     useEffect(() => {
+        console.log('MyEpisodes: useEffect [isDark]');
         if (isDark) {
             document.documentElement.classList.add('dark');
             localStorage.setItem('vc_theme', 'dark');
@@ -145,9 +146,21 @@ const MyEpisodes = () => {
 
     const toggleTheme = () => setIsDark(!isDark);
 
-    const stored = localStorage.getItem('vc_user');
-    const user = stored ? JSON.parse(stored) : { name: 'Guest', email: '' };
-    const initials = (user.name || 'Guest')
+    const getUserSafely = () => {
+        try {
+            const stored = localStorage.getItem('vc_user');
+            if (stored && stored !== 'undefined' && stored !== 'null') {
+                return JSON.parse(stored);
+            }
+        } catch (err) {
+            console.error('Failed to parse user data:', err);
+        }
+        return { name: 'Guest', email: '' };
+    };
+
+    const user = getUserSafely();
+    const userName = user.name || 'Guest';
+    const initials = userName
         .split(' ')
         .map((w) => w ? w[0] : '')
         .join('')
@@ -157,28 +170,61 @@ const MyEpisodes = () => {
     const [episodes, setEpisodes] = useState([]);
 
     useEffect(() => {
-        const storedEpisodes = localStorage.getItem('vc_episodes');
-        if (storedEpisodes) {
-            setEpisodes(JSON.parse(storedEpisodes));
-        } else {
+        console.log('MyEpisodes: useEffect [loadEpisodes]');
+        const loadEpisodes = () => {
+            try {
+                const storedEpisodes = localStorage.getItem('vc_episodes');
+                if (storedEpisodes && storedEpisodes !== 'undefined' && storedEpisodes !== 'null') {
+                    const parsed = JSON.parse(storedEpisodes);
+                    if (Array.isArray(parsed)) {
+                        setEpisodes(parsed);
+                        return;
+                    }
+                }
+            } catch (err) {
+                console.error('Failed to load episodes:', err);
+            }
+            // Fallback to dummy data mapping if parsing fails or no data
             localStorage.setItem('vc_episodes', JSON.stringify(DUMMY_EPISODES));
             setEpisodes(DUMMY_EPISODES);
-        }
+        };
+        loadEpisodes();
     }, []);
 
     const handlePlayEpisode = (id) => {
-        const updated = episodes.map(ep => {
-            if (ep.id === id) return { ...ep, views: (ep.views || 0) + 1 };
-            return ep;
+        const ep = episodes.find(e => e.id === id);
+        if (!ep) return;
+        
+        if (ep.status !== 'ready') {
+            alert(`Episode "${ep.title}" is still ${ep.status}.`);
+            return;
+        }
+        
+        const updated = episodes.map(item => {
+            if (item.id === id) return { ...item, views: (item.views || 0) + 1 };
+            return item;
         });
         setEpisodes(updated);
         localStorage.setItem('vc_episodes', JSON.stringify(updated));
+        alert(`Playing: ${ep.title}`);
     };
 
-    const filteredEpisodes = episodes.filter(ep => {
-        const matchesFilter = filter === 'All' || ep.status.toLowerCase() === filter.toLowerCase();
-        const matchesSearch = ep.title.toLowerCase().includes(search.toLowerCase()) ||
-            ep.desc.toLowerCase().includes(search.toLowerCase());
+    const handleDeleteEpisode = (id) => {
+        if (window.confirm('Are you sure you want to delete this episode?')) {
+            const updated = episodes.filter(ep => ep.id !== id);
+            setEpisodes(updated);
+            localStorage.setItem('vc_episodes', JSON.stringify(updated));
+        }
+    };
+
+    const filteredEpisodes = (episodes || []).filter(ep => {
+        const title = ep.title || '';
+        const desc = ep.desc || '';
+        const status = ep.status || 'draft';
+
+        const matchesFilter = filter === 'All' || status.toLowerCase() === filter.toLowerCase();
+        const matchesSearch = title.toLowerCase().includes(search.toLowerCase()) ||
+            desc.toLowerCase().includes(search.toLowerCase());
         return matchesFilter && matchesSearch;
     });
 
@@ -188,7 +234,7 @@ const MyEpisodes = () => {
             {/* ─── MOBILE SIDEBAR (DRAWER) ─── */}
             <AnimatePresence>
                 {isMobileMenuOpen && (
-                    <>
+                    <React.Fragment key="mobile-sidebar">
                         {/* Backdrop */}
                         <motion.div
                             initial={{ opacity: 0 }}
@@ -236,7 +282,7 @@ const MyEpisodes = () => {
                                 </div>
                             </nav>
                         </motion.aside>
-                    </>
+                    </React.Fragment>
                 )}
             </AnimatePresence>
 
@@ -275,8 +321,8 @@ const MyEpisodes = () => {
                         {initials}
                     </div>
                     <div className="overflow-hidden flex-1">
-                        <p className="text-sm font-bold text-slate-800 dark:text-slate-100 truncate">{user.name.split(' ')[0]}</p>
-                        <p className="text-xs text-slate-400 truncate">{user.email}</p>
+                        <p className="text-sm font-bold text-slate-800 dark:text-slate-100 truncate">{(user.name || 'Guest').split(' ')[0]}</p>
+                        <p className="text-xs text-slate-400 truncate">{user.email || ''}</p>
                     </div>
                     <ChevronRight size={14} className="text-slate-300 group-hover:text-slate-500 dark:group-hover:text-slate-400 transition-colors" />
                 </div>
@@ -360,8 +406,9 @@ const MyEpisodes = () => {
                 {/* Episodes Grid */}
                 <div className="flex-1 px-6 md:px-10 py-6 max-w-[1400px]">
                     <AnimatePresence mode="popLayout">
-                        {filteredEpisodes.length === 0 ? (
+                        {(filteredEpisodes || []).length === 0 ? (
                             <motion.div
+                                key="no-episodes"
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 exit={{ opacity: 0, scale: 0.95 }}
@@ -385,10 +432,11 @@ const MyEpisodes = () => {
                             </motion.div>
                         ) : (
                             <motion.div
+                                key="episodes-grid"
                                 layout
                                 className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6"
                             >
-                                {filteredEpisodes.map((ep) => (
+                                {(filteredEpisodes || []).map((ep) => (
                                     <motion.div
                                         key={ep.id}
                                         layout
@@ -438,14 +486,14 @@ const MyEpisodes = () => {
                                                         <span className="flex items-center gap-1"><Clock size={12} /> {ep.duration}</span>
                                                         <span>{ep.date}</span>
                                                     </div>
-                                                    {ep.views > 0 && (
+                                                    {(ep.views || 0) > 0 && (
                                                         <span className="flex items-center gap-1"><Headphones size={12} /> {ep.views}</span>
                                                     )}
                                                 </div>
 
                                                 {/* Tags */}
                                                 <div className="flex flex-wrap gap-1.5">
-                                                    {ep.tags.map(tag => (
+                                                    {(ep.tags || []).map(tag => (
                                                         <span
                                                             key={tag}
                                                             className="px-2.5 py-1 bg-white/5 border border-white/10 rounded-lg text-[10px] font-bold text-slate-400"
@@ -459,8 +507,12 @@ const MyEpisodes = () => {
 
                                         {/* Action Overlay Button */}
                                         <div className="absolute top-4 left-4 opacity-0 group-hover:opacity-100 transition-opacity border-r-0">
-                                            <button className="w-8 h-8 rounded-xl bg-black/40 backdrop-blur-md border border-white/10 flex items-center justify-center text-white hover:bg-teal-500 hover:border-teal-500 transition-all">
-                                                <MoreHorizontal size={14} />
+                                            <button 
+                                                onClick={() => handleDeleteEpisode(ep.id)}
+                                                className="w-8 h-8 rounded-xl bg-red-500/10 backdrop-blur-md border border-red-500/20 flex items-center justify-center text-red-500 hover:bg-red-500 hover:text-white transition-all"
+                                                title="Delete Episode"
+                                            >
+                                                <X size={14} />
                                             </button>
                                         </div>
 
