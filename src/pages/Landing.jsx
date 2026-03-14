@@ -193,8 +193,8 @@ const Landing = () => {
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
                             {[
-                                { name: "Mohammad Afzal Malik", role: "Frontend & Deployment" },
                                 { name: "Abhishek Shingh", role: "Backend & Integration" },
+                                { name: "Mohammad Afzal Malik", role: "Frontend & Deployment" },
                                 { name: "Priyanshu Sharma", role: "ML Model & Maintenance" }
                             ].map((member, index) => (
                                 <motion.div
