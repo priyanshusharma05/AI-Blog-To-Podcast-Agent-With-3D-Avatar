@@ -5,7 +5,7 @@ import { Link } from 'react-router-dom';
 import Navbar from '../components/layout/Navbar';
 import Hero from '../components/landing/Hero';
 import DemoVideo from '../components/landing/DemoVideo';
-import audienceImg from '../assets/images/who_is_it_for.png';
+import audienceImg from '../assets/images/who_is_it_for_v2.png';
 
 const Landing = () => {
 
