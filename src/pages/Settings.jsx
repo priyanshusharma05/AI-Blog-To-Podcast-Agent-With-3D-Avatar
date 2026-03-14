@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
     LayoutDashboard, PlusCircle, AudioLines, Settings as SettingsIcon, LogOut,
     Mic, Bell, Moon, Sun, ChevronRight, Menu, X, User, Shield, CreditCard,
-    Smartphone, Globe, Info, Save, BarChart3
+    Smartphone, Globe, Info, Save, BarChart3, Target
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 

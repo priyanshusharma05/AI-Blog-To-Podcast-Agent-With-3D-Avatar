@@ -140,7 +140,7 @@ const Dashboard = () => {
     };
 
     return (
-        <div className="min-h-screen bg-[#F8FAFB] dark:bg-slate-950 flex font-sans transition-colors duration-300">
+        <div className="min-h-screen bg-[#F8FAFB] dark:bg-slate-950 flex font-sans transition-colors duration-300 overflow-x-hidden">
 
             {/* ─── MOBILE SIDEBAR (DRAWER) ─── */}
             <AnimatePresence>
