@@ -17,7 +17,10 @@ import {
     Shield,
     ChevronRight,
     Sparkles,
-    BarChart3
+    BarChart3,
+    Database,
+    Globe,
+    Zap
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 
@@ -237,6 +240,64 @@ const Settings = () => {
                                             className="absolute top-1 w-4 h-4 bg-white rounded-full shadow-sm"
                                         />
                                     </button>
+                                </div>
+                            </div>
+                        </SettingsCard>
+
+                        {/* Usage & Credits */}
+                        <SettingsCard title="Usage & Credits" icon={Database}>
+                            <div className="space-y-6">
+                                <div className="p-5 bg-slate-50 dark:bg-slate-800/50 rounded-[24px] border border-slate-100 dark:border-slate-800">
+                                    <div className="flex items-center justify-between mb-4">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-9 h-9 rounded-xl bg-[#0D9488]/10 flex items-center justify-center text-[#0D9488]">
+                                                <Zap size={18} />
+                                            </div>
+                                            <div>
+                                                <p className="text-sm font-black text-slate-800 dark:text-slate-100">Podcast Generations</p>
+                                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">Free Plan</p>
+                                            </div>
+                                        </div>
+                                        <p className="text-sm font-black text-slate-800 dark:text-slate-100">12 / 20</p>
+                                    </div>
+                                    <div className="h-2 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+                                        <motion.div 
+                                            initial={{ width: 0 }}
+                                            animate={{ width: '60%' }}
+                                            className="h-full bg-[#0D9488] rounded-full"
+                                        />
+                                    </div>
+                                    <p className="text-[10px] text-slate-400 font-medium mt-3">Resetting in <span className="text-slate-600 dark:text-slate-200 font-bold">14 days</span></p>
+                                </div>
+
+                                <motion.button 
+                                    whileHover={{ scale: 1.02 }}
+                                    className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-[#0D9488] to-teal-400 text-white font-black text-sm shadow-lg shadow-teal-500/20"
+                                >
+                                    Upgrade to Pro
+                                </motion.button>
+                            </div>
+                        </SettingsCard>
+
+                        {/* Language & Account */}
+                        <SettingsCard title="Language & Region" icon={Globe}>
+                            <div className="space-y-4">
+                                <div className="space-y-2">
+                                    <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">App Language</label>
+                                    <select className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl px-4 py-3.5 text-sm font-bold text-slate-800 dark:text-slate-100 focus:outline-none focus:border-[#0D9488] transition-colors appearance-none">
+                                        <option>English (US)</option>
+                                        <option>Spanish</option>
+                                        <option>French</option>
+                                        <option>Hindi</option>
+                                    </select>
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">Timezone</label>
+                                    <select className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl px-4 py-3.5 text-sm font-bold text-slate-800 dark:text-slate-100 focus:outline-none focus:border-[#0D9488] transition-colors appearance-none">
+                                        <option>(GMT+05:30) India Standard Time</option>
+                                        <option>(GMT-08:00) Pacific Time</option>
+                                        <option>(GMT+00:00) UTC</option>
+                                    </select>
                                 </div>
                             </div>
                         </SettingsCard>

@@ -5,11 +5,9 @@ import { Link } from 'react-router-dom';
 import Navbar from '../components/layout/Navbar';
 import Hero from '../components/landing/Hero';
 import DemoVideo from '../components/landing/DemoVideo';
-import AboutModal from '../components/ui/AboutModal';
 import audienceImg from '../assets/images/who_is_it_for.png';
 
 const Landing = () => {
-    const [isAboutOpen, setIsAboutOpen] = React.useState(false);
 
     const steps = [
         { id: "1️⃣", title: "Upload Blog URL or Text", desc: "Start by pasting your content link or raw text." },
@@ -163,6 +161,42 @@ const Landing = () => {
                     </div>
                 </section>
 
+                {/* ABOUT SECTION */}
+                <section id="about" className="py-32 bg-slate-50 relative overflow-hidden">
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                        <div className="text-center mb-16">
+                            <span className="text-[10px] font-black text-[#0D9488] uppercase tracking-[0.3em] mb-4 block">Our Team</span>
+                            <h2 className="text-4xl md:text-6xl font-black tracking-tight mb-6">About VoiceCast</h2>
+                            <p className="text-slate-500 text-lg font-medium max-w-2xl mx-auto">
+                                VoiceCast was created to bridge the gap between written content and immersive audio-visual experiences. 
+                                By leveraging state-of-the-art AI, we enable creators to effortlessly turn long-form articles into dynamic, conversational podcast episodes.
+                            </p>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                            {[
+                                { name: "Mohammad Afzal Malik", role: "Frontend and Deployment", color: "from-teal-400 to-teal-600" },
+                                { name: "Abhishek Shingh", role: "Backend & System Integration", color: "from-emerald-400 to-emerald-600" },
+                                { name: "Priyanshu Sharma", role: "ML Model & Maintenance", color: "from-slate-700 to-slate-900" }
+                            ].map((member, index) => (
+                                <motion.div
+                                    key={index}
+                                    initial={{ opacity: 0, y: 20 }}
+                                    whileInView={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: index * 0.1 }}
+                                    className="bg-white p-8 rounded-[40px] border border-slate-100 shadow-sm hover:shadow-xl transition-all group"
+                                >
+                                    <div className={`w-16 h-16 rounded-[20px] bg-gradient-to-br ${member.color} mb-6 flex items-center justify-center text-white shadow-lg shadow-teal-900/10`}>
+                                        <UserCheck size={30} />
+                                    </div>
+                                    <h4 className="text-xl font-black text-slate-800 mb-1">{member.name}</h4>
+                                    <p className="text-sm font-bold text-slate-400 uppercase tracking-tight">{member.role}</p>
+                                </motion.div>
+                            ))}
+                        </div>
+                    </div>
+                </section>
+
                 {/* CTA SECTION */}
                 <section className="py-32 relative overflow-hidden bg-white">
                     <div className="max-w-4xl mx-auto px-4 text-center">
@@ -207,7 +241,15 @@ const Landing = () => {
                         <h4 className="font-black uppercase text-xs tracking-widest mb-6">Company</h4>
                         <ul className="space-y-4 text-sm font-bold text-slate-500">
                             <li>
-                                <button onClick={() => setIsAboutOpen(true)} className="hover:text-[#0D9488] transition-colors">About</button>
+                                <button 
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        document.getElementById('about')?.scrollIntoView({ behavior: 'smooth' });
+                                    }} 
+                                    className="hover:text-[#0D9488] transition-colors"
+                                >
+                                    About
+                                </button>
                             </li>
                             <li>Blog</li>
                             <li>Security</li>
@@ -216,10 +258,6 @@ const Landing = () => {
                 </div>
             </footer>
 
-            <AboutModal
-                isOpen={isAboutOpen}
-                onClose={() => setIsAboutOpen(false)}
-            />
         </div>
     );
 };

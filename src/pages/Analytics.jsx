@@ -193,14 +193,18 @@ const Analytics = () => {
                     </div>
                 </nav>
 
-                <div className="mt-6 flex items-center gap-3 px-3 py-3 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-800">
+                <div 
+                    onClick={() => navigate('/settings')}
+                    className="mt-6 flex items-center gap-3 px-3 py-3 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-800 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors group"
+                >
                     <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#0D9488] to-teal-300 flex items-center justify-center text-white text-xs font-black shrink-0">
                         {initials}
                     </div>
-                    <div className="overflow-hidden">
+                    <div className="overflow-hidden flex-1">
                         <p className="text-sm font-bold text-slate-800 dark:text-slate-100 truncate">{user.name.split(' ')[0]}</p>
                         <p className="text-xs text-slate-400 truncate">{user.email}</p>
                     </div>
+                    <ChevronRight size={14} className="text-slate-300 group-hover:text-slate-500 dark:group-hover:text-slate-400 transition-colors" />
                 </div>
             </aside>
 
