@@ -120,8 +120,7 @@ const Landing = () => {
                         </div>
                     </div>
                 </section>
-
-                {/* USE CASES SECTION */}
+                {/* USE CASES SECTION - WITH IMAGE */}
                 <section id="use-cases" className="py-32 bg-[#FDFCFB]">
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                         <div className="flex flex-col md:flex-row items-center justify-between gap-12">
@@ -150,52 +149,14 @@ const Landing = () => {
                                         alt="Who VoiceCast is for" 
                                         className="w-full h-full object-cover"
                                     />
-                                    {/* Glassmorphism overlay */}
                                     <div className="absolute inset-0 bg-gradient-to-t from-teal-900/20 to-transparent pointer-events-none" />
                                 </motion.div>
-                                {/* Decorative elements */}
                                 <div className="absolute -top-6 -right-6 w-24 h-24 bg-teal-500/10 rounded-full blur-3xl" />
-                                <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-teal-500/5 rounded-full blur-3xl" />
                             </div>
                         </div>
                     </div>
                 </section>
 
-                {/* ABOUT SECTION */}
-                <section id="about" className="py-32 bg-slate-50 relative overflow-hidden">
-                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                        <div className="text-center mb-16">
-                            <span className="text-[10px] font-black text-[#0D9488] uppercase tracking-[0.3em] mb-4 block">Our Team</span>
-                            <h2 className="text-4xl md:text-6xl font-black tracking-tight mb-6">About VoiceCast</h2>
-                            <p className="text-slate-500 text-lg font-medium max-w-2xl mx-auto">
-                                VoiceCast was created to bridge the gap between written content and immersive audio-visual experiences. 
-                                By leveraging state-of-the-art AI, we enable creators to effortlessly turn long-form articles into dynamic, conversational podcast episodes.
-                            </p>
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                            {[
-                                { name: "Mohammad Afzal Malik", role: "Frontend and Deployment", color: "from-teal-400 to-teal-600" },
-                                { name: "Abhishek Shingh", role: "Backend & System Integration", color: "from-emerald-400 to-emerald-600" },
-                                { name: "Priyanshu Sharma", role: "ML Model & Maintenance", color: "from-slate-700 to-slate-900" }
-                            ].map((member, index) => (
-                                <motion.div
-                                    key={index}
-                                    initial={{ opacity: 0, y: 20 }}
-                                    whileInView={{ opacity: 1, y: 0 }}
-                                    transition={{ delay: index * 0.1 }}
-                                    className="bg-white p-8 rounded-[40px] border border-slate-100 shadow-sm hover:shadow-xl transition-all group"
-                                >
-                                    <div className={`w-16 h-16 rounded-[20px] bg-gradient-to-br ${member.color} mb-6 flex items-center justify-center text-white shadow-lg shadow-teal-900/10`}>
-                                        <UserCheck size={30} />
-                                    </div>
-                                    <h4 className="text-xl font-black text-slate-800 mb-1">{member.name}</h4>
-                                    <p className="text-sm font-bold text-slate-400 uppercase tracking-tight">{member.role}</p>
-                                </motion.div>
-                            ))}
-                        </div>
-                    </div>
-                </section>
 
                 {/* CTA SECTION */}
                 <section className="py-32 relative overflow-hidden bg-white">
@@ -216,44 +177,65 @@ const Landing = () => {
                         </motion.div>
                     </div>
                 </section>
+
+                {/* ABOUT SECTION - RE-POSITIONED AND SMALLER */}
+                <section id="about" className="py-24 bg-[#FDFCFB] relative overflow-hidden border-t border-slate-100">
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                        <div className="flex flex-col md:flex-row items-end justify-between mb-12 gap-6">
+                            <div className="max-w-xl text-left">
+                                <span className="text-[10px] font-black text-[#0D9488] uppercase tracking-[0.3em] mb-4 block underline decoration-teal-500/30 underline-offset-8">Our Team</span>
+                                <h2 className="text-3xl md:text-5xl font-black tracking-tight text-slate-900">Built by a passionate team of <span className="text-slate-400 font-medium">engineers.</span></h2>
+                            </div>
+                            <p className="text-slate-400 text-sm font-medium max-w-sm text-left">
+                                We're dedicated to simplifying content creation through cutting-edge AI and seamless narrative experiences.
+                            </p>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+                            {[
+                                { name: "Mohammad Afzal Malik", role: "Frontend & Deployment" },
+                                { name: "Abhishek Shingh", role: "Backend & Integration" },
+                                { name: "Priyanshu Sharma", role: "ML Model & Maintenance" }
+                            ].map((member, index) => (
+                                <motion.div
+                                    key={index}
+                                    initial={{ opacity: 0, y: 10 }}
+                                    whileInView={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: index * 0.1 }}
+                                    className="p-6 rounded-3xl bg-white border border-slate-100/50 hover:shadow-xl hover:shadow-slate-200/50 transition-all group text-left"
+                                >
+                                    <h4 className="text-lg font-black text-slate-800 mb-0.5">{member.name}</h4>
+                                    <p className="text-[10px] font-black text-[#0D9488] uppercase tracking-widest">{member.role}</p>
+                                </motion.div>
+                            ))}
+                        </div>
+                    </div>
+                </section>
             </main>
 
-            <footer className="py-20 bg-[#FDFCFB] border-t border-slate-100">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-4 gap-12">
-                    <div className="col-span-2">
-                        <div className="flex items-center gap-2 mb-6">
-                            <div className="w-8 h-8 bg-[#0D9488] rounded-full flex items-center justify-center">
-                                <Mic size={16} className="text-white" />
-                            </div>
-                            <span className="text-xl font-black tracking-tighter uppercase">VoiceCast</span>
+            <footer className="py-12 bg-[#FDFCFB] border-t border-slate-100">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-8">
+                    <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 bg-[#0D9488] rounded-full flex items-center justify-center">
+                            <Mic size={16} className="text-white" />
                         </div>
-                        <p className="text-slate-400 max-w-sm font-medium">The narrative layer for the modern web. Built for creators who value depth and reach.</p>
+                        <span className="text-xl font-black tracking-tighter uppercase">VoiceCast</span>
                     </div>
-                    <div>
-                        <h4 className="font-black uppercase text-xs tracking-widest mb-6">Product</h4>
-                        <ul className="space-y-4 text-sm font-bold text-slate-500">
-                            <li>Studio</li>
-                            <li>Voices</li>
-                            <li>Pricing</li>
-                        </ul>
-                    </div>
-                    <div>
-                        <h4 className="font-black uppercase text-xs tracking-widest mb-6">Company</h4>
-                        <ul className="space-y-4 text-sm font-bold text-slate-500">
-                            <li>
-                                <button 
-                                    onClick={(e) => {
-                                        e.preventDefault();
-                                        document.getElementById('about')?.scrollIntoView({ behavior: 'smooth' });
-                                    }} 
-                                    className="hover:text-[#0D9488] transition-colors"
-                                >
-                                    About
-                                </button>
-                            </li>
-                            <li>Blog</li>
-                            <li>Security</li>
-                        </ul>
+                    
+                    <p className="text-slate-400 text-xs font-bold uppercase tracking-[0.2em]">© 2026 VoiceCast AI. Built by creators for creators.</p>
+                    
+                    <div className="flex gap-8">
+                        <button 
+                            onClick={(e) => {
+                                e.preventDefault();
+                                document.getElementById('about')?.scrollIntoView({ behavior: 'smooth' });
+                            }} 
+                            className="text-xs font-black text-slate-500 hover:text-[#0D9488] transition-colors uppercase tracking-widest"
+                        >
+                            The Team
+                        </button>
+                        <span className="text-xs font-black text-slate-500 hover:text-[#0D9488] transition-colors uppercase tracking-widest cursor-pointer">Blog</span>
+                        <span className="text-xs font-black text-slate-500 hover:text-[#0D9488] transition-colors uppercase tracking-widest cursor-pointer">Security</span>
                     </div>
                 </div>
             </footer>
