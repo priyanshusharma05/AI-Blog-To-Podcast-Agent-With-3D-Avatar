@@ -18,7 +18,7 @@ const Landing = () => {
     ];
 
     const audiences = [
-        "Bloggers", "Marketing Teams", "Educators", "Influencers", "Content Agencies"
+        "Students", "Bloggers", "Marketing Teams", "Educators", "Influencers", "Content Agencies"
     ];
 
     return (
