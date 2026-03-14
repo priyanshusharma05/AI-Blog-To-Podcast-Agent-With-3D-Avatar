@@ -6,6 +6,7 @@ import Navbar from '../components/layout/Navbar';
 import Hero from '../components/landing/Hero';
 import DemoVideo from '../components/landing/DemoVideo';
 import AboutModal from '../components/ui/AboutModal';
+import audienceImg from '../assets/images/who_is_it_for.png';
 
 const Landing = () => {
     const [isAboutOpen, setIsAboutOpen] = React.useState(false);
@@ -137,10 +138,26 @@ const Landing = () => {
                                     ))}
                                 </div>
                             </div>
-                            <div className="md:w-1/2 relative">
-                                <div className="w-full aspect-video bg-teal-900/5 rounded-3xl border border-teal-900/10 flex items-center justify-center overflow-hidden">
-                                    <UserCheck size={80} className="text-[#0D9488] opacity-20" />
-                                </div>
+                            <div className="md:w-1/2 relative group">
+                                <motion.div 
+                                    initial={{ opacity: 0, scale: 0.95 }}
+                                    whileInView={{ opacity: 1, scale: 1 }}
+                                    transition={{ duration: 0.8, ease: "easeOut" }}
+                                    className="w-full aspect-video rounded-[32px] border border-teal-900/10 shadow-2xl shadow-teal-900/10 overflow-hidden bg-white"
+                                >
+                                    <motion.img 
+                                        whileHover={{ scale: 1.05 }}
+                                        transition={{ duration: 0.6 }}
+                                        src={audienceImg} 
+                                        alt="Who VoiceCast is for" 
+                                        className="w-full h-full object-cover"
+                                    />
+                                    {/* Glassmorphism overlay */}
+                                    <div className="absolute inset-0 bg-gradient-to-t from-teal-900/20 to-transparent pointer-events-none" />
+                                </motion.div>
+                                {/* Decorative elements */}
+                                <div className="absolute -top-6 -right-6 w-24 h-24 bg-teal-500/10 rounded-full blur-3xl" />
+                                <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-teal-500/5 rounded-full blur-3xl" />
                             </div>
                         </div>
                     </div>
