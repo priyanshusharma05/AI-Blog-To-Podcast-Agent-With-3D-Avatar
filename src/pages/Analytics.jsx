@@ -24,7 +24,7 @@ const SideLink = ({ icon: Icon, label, active, onClick }) => (
 );
 
 /* ─── Metric Card ────────────────────────────────── */
-const MetricCard = ({ label, value, trend, trendValue, icon: Icon, color }) => {
+const MetricCard = ({ label, value, trend, trendValue, icon: Icon, color, description }) => {
     const isPositive = trend === 'up';
     const colorClasses = {
         teal: 'bg-teal-50 dark:bg-teal-500/10 text-[#0D9488] ring-teal-100 dark:ring-teal-500/20',
@@ -36,7 +36,7 @@ const MetricCard = ({ label, value, trend, trendValue, icon: Icon, color }) => {
     return (
         <motion.div 
             whileHover={{ y: -4 }}
-            className="bg-white dark:bg-slate-900 p-6 rounded-[24px] border border-slate-100 dark:border-slate-800 shadow-sm"
+            className="bg-white dark:bg-slate-900 p-6 rounded-[24px] border border-slate-100 dark:border-slate-800 shadow-sm group"
         >
             <div className="flex items-center justify-between mb-4">
                 <div className={`w-10 h-10 rounded-xl flex items-center justify-center ring-4 ${colorClasses[color]}`}>
@@ -49,11 +49,39 @@ const MetricCard = ({ label, value, trend, trendValue, icon: Icon, color }) => {
             </div>
             <p className="text-sm font-bold text-slate-500 dark:text-slate-400">{label}</p>
             <h3 className="text-2xl font-black text-slate-800 dark:text-slate-100 mt-1">{value}</h3>
+            <p className="text-[10px] text-slate-400 font-medium mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                {description}
+            </p>
         </motion.div>
     );
 };
 
+/* ─── Insights Summary ───────────────────────────── */
+const InsightsSummary = () => (
+    <motion.div 
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="bg-gradient-to-r from-teal-500 to-teal-600 rounded-[24px] p-6 text-white shadow-lg shadow-teal-500/20 flex flex-col md:flex-row items-center justify-between gap-4"
+    >
+        <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-md">
+                <Zap size={24} className="text-white" />
+            </div>
+            <div>
+                <h3 className="text-lg font-black tracking-tight">Weekly Performance Summary</h3>
+                <p className="text-teal-50 text-sm font-medium">Your audience engagement is up <span className="font-black text-white">12.5%</span> this week. Great work!</p>
+            </div>
+        </div>
+        <div className="flex items-center gap-2 text-xs font-black bg-white/10 px-4 py-2 rounded-xl backdrop-blur-md border border-white/10">
+            <TrendingUp size={14} />
+            TOP PERFORMING CONTENT
+        </div>
+    </motion.div>
+);
+
 /* ─── Mini Trend Chart ───────────────────────────── */
+// ... (TrendChart component remains the same)
+
 const TrendChart = () => {
     const data = [30, 45, 35, 60, 55, 80, 75, 90, 85, 100];
     const points = data.map((val, i) => `${(i * 100) / (data.length - 1)},${100 - val}`).join(' ');
@@ -195,12 +223,15 @@ const Analytics = () => {
                 </header>
 
                 <div className="flex-1 px-6 md:px-10 py-8 space-y-8 max-w-7xl">
+                    {/* Insights Summary */}
+                    <InsightsSummary />
+
                     {/* Metrics Grid */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                        <MetricCard label="Total Listens" value="2,842" trend="up" trendValue="12.5" icon={Headphones} color="teal" />
-                        <MetricCard label="Avg. Listen Time" value="4:22" trend="up" trendValue="5.2" icon={Clock} color="blue" />
-                        <MetricCard label="Conversion Rate" value="38.4%" trend="down" trendValue="2.1" icon={Target} color="violet" />
-                        <MetricCard label="Total Shares" value="428" trend="up" trendValue="18.7" icon={Users} color="amber" />
+                        <MetricCard label="Total Listens" value="2,842" trend="up" trendValue="12.5" icon={Headphones} color="teal" description="Total number of times your podcasts were started." />
+                        <MetricCard label="Avg. Listen Time" value="4:22" trend="up" trendValue="5.2" icon={Clock} color="blue" description="Average time spent listening to each episode." />
+                        <MetricCard label="Conversion Rate" value="38.4%" trend="down" trendValue="2.1" icon={Target} color="violet" description="People who listened after visiting from a blog URL." />
+                        <MetricCard label="Total Shares" value="428" trend="up" trendValue="18.7" icon={Users} color="amber" description="Number of times listeners shared your episodes." />
                     </div>
 
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -220,20 +251,20 @@ const Analytics = () => {
                         </div>
 
                         {/* Engagement Stats */}
-                        <div className="bg-[#0D9488] rounded-[32px] p-8 text-white relative overflow-hidden flex flex-col justify-between">
+                        <div className="bg-[#0D9488] rounded-[32px] p-8 text-white relative overflow-hidden flex flex-col justify-between shadow-xl shadow-teal-500/10">
                             <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16 blur-2xl" />
                             <div className="relative z-10">
-                                <p className="text-[10px] font-black uppercase tracking-widest text-teal-100/60 mb-1">Most Engaging</p>
+                                <p className="text-[10px] font-black uppercase tracking-widest text-teal-100/60 mb-1">Top Trending Episode</p>
                                 <h4 className="text-lg font-black leading-tight">The Future of AI in Creative Industries</h4>
                                 <div className="mt-6 flex items-center gap-6">
                                     <div>
                                         <p className="text-2xl font-black">92%</p>
-                                        <p className="text-[10px] font-bold text-teal-100/60 uppercase">Retention</p>
+                                        <p className="text-[10px] font-bold text-teal-100/60 uppercase">Completion Rate</p>
                                     </div>
                                     <div className="w-px h-8 bg-white/20" />
                                     <div>
                                         <p className="text-2xl font-black">1.2k</p>
-                                        <p className="text-[10px] font-bold text-teal-100/60 uppercase">Listens</p>
+                                        <p className="text-[10px] font-bold text-teal-100/60 uppercase">Readers Tuned In</p>
                                     </div>
                                 </div>
                             </div>
