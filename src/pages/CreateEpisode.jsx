@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
     LayoutDashboard, PlusCircle, AudioLines, Settings, LogOut,
     Mic, Sparkles, Link2, FileText, Zap, ChevronRight,
-    Bell, BarChart3, ArrowRight, CheckCircle2, Loader2, Sun, Moon
+    Bell, BarChart3, ArrowRight, CheckCircle2, Loader2, Sun, Moon, Menu, X
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useEffect } from 'react';
@@ -107,6 +107,7 @@ const AIAvatar = ({ status }) => (
 const CreateEpisode = () => {
     const navigate = useNavigate();
     const [activeNav, setActiveNav] = useState('create');
+    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [inputMode, setInputMode] = useState('url'); // 'url' | 'text'
     const [title, setTitle] = useState('');
     const [blogUrl, setBlogUrl] = useState('');
@@ -130,7 +131,12 @@ const CreateEpisode = () => {
 
     const stored = localStorage.getItem('vc_user');
     const user = stored ? JSON.parse(stored) : { name: 'Guest', email: '' };
-    const initials = user.name.split(' ').map((w) => w[0]).join('').toUpperCase().slice(0, 2);
+    const initials = (user.name || 'Guest')
+        .split(' ')
+        .map((w) => w ? w[0] : '')
+        .join('')
+        .toUpperCase()
+        .slice(0, 2);
 
     const canGenerate = inputMode === 'url' ? blogUrl.trim() !== '' : pasteText.trim() !== '';
 
@@ -143,6 +149,61 @@ const CreateEpisode = () => {
 
     return (
         <div className="min-h-screen bg-[#F8FAFB] dark:bg-slate-950 flex font-sans transition-colors duration-300">
+
+            {/* ─── MOBILE SIDEBAR (DRAWER) ─── */}
+            <AnimatePresence>
+                {isMobileMenuOpen && (
+                    <>
+                        {/* Backdrop */}
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            onClick={() => setIsMobileMenuOpen(false)}
+                            className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[40] lg:hidden"
+                        />
+                        
+                        {/* Drawer */}
+                        <motion.aside
+                            initial={{ x: '-100%' }}
+                            animate={{ x: 0 }}
+                            exit={{ x: '-100%' }}
+                            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+                            className="fixed left-0 top-0 bottom-0 w-72 bg-white dark:bg-slate-900 z-[50] lg:hidden flex flex-col px-4 py-6 shadow-2xl"
+                        >
+                            <div className="flex items-center justify-between mb-8 px-2">
+                                <Link to="/" className="flex items-center gap-2.5">
+                                    <div className="w-8 h-8 bg-[#0D9488] rounded-lg flex items-center justify-center">
+                                        <Mic size={14} className="text-white" />
+                                    </div>
+                                    <span className="text-base font-black tracking-tight text-slate-800 dark:text-slate-100">
+                                        VOICE<span className="text-[#0D9488]">CAST</span>
+                                    </span>
+                                </Link>
+                                <button 
+                                    onClick={() => setIsMobileMenuOpen(false)}
+                                    className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-500"
+                                >
+                                    <X size={18} />
+                                </button>
+                            </div>
+
+                            <nav className="flex flex-col gap-1 flex-1">
+                                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 px-4 mb-2">Menu</p>
+                                <SideLink icon={LayoutDashboard} label="Dashboard" active={activeNav === 'dashboard'} onClick={() => { navigate('/dashboard'); setIsMobileMenuOpen(false); }} />
+                                <SideLink icon={PlusCircle} label="Create Episode" active={activeNav === 'create'} onClick={() => { setActiveNav('create'); setIsMobileMenuOpen(false); }} />
+                                <SideLink icon={AudioLines} label="My Episodes" active={activeNav === 'episodes'} onClick={() => { navigate('/episodes'); setIsMobileMenuOpen(false); }} />
+                                <SideLink icon={BarChart3} label="Analytics" active={activeNav === 'analytics'} onClick={() => { navigate('/analytics'); setIsMobileMenuOpen(false); }} />
+
+                                <div className="mt-auto pt-4 border-t border-slate-100 dark:border-slate-800 flex flex-col gap-1">
+                                    <SideLink icon={Settings} label="Settings" active={false} onClick={() => { navigate('/settings'); setIsMobileMenuOpen(false); }} />
+                                    <SideLink icon={LogOut} label="Logout" active={false} onClick={() => { localStorage.removeItem('vc_user'); navigate('/'); }} />
+                                </div>
+                            </nav>
+                        </motion.aside>
+                    </>
+                )}
+            </AnimatePresence>
 
             {/* ─── SIDEBAR ─── */}
             <aside className="w-64 shrink-0 hidden lg:flex flex-col bg-white dark:bg-slate-900 border-r border-slate-100 dark:border-slate-800 min-h-screen fixed left-0 top-0 bottom-0 z-30 px-4 py-6">
@@ -191,9 +252,18 @@ const CreateEpisode = () => {
 
                 {/* Top bar */}
                 <header className="sticky top-0 z-20 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-100 dark:border-slate-800 px-6 md:px-10 py-4 flex items-center justify-between">
-                    <div>
-                        <h1 className="text-lg font-black text-slate-800 dark:text-slate-100 tracking-tight">Create Episode</h1>
-                        <p className="text-xs text-slate-400 font-medium">Transform a blog into a podcast script</p>
+                    <div className="flex items-center gap-4">
+                        {/* Mobile Menu Toggle */}
+                        <button
+                            onClick={() => setIsMobileMenuOpen(true)}
+                            className="lg:hidden p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400"
+                        >
+                            <Menu size={20} />
+                        </button>
+                        <div>
+                            <h1 className="text-lg font-black text-slate-800 dark:text-slate-100 tracking-tight">Create Episode</h1>
+                            <p className="text-xs text-slate-400 font-medium">Transform a blog into a podcast script</p>
+                        </div>
                     </div>
                     <div className="flex items-center gap-3">
                         <button
