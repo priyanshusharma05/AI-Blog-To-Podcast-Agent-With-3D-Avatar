@@ -45,7 +45,7 @@ const Signup = () => {
         return errs;
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
         const errs = validate();
         if (Object.keys(errs).length > 0) {
@@ -54,11 +54,40 @@ const Signup = () => {
         }
         setErrors({});
         setLoading(true);
-        setTimeout(() => {
-            localStorage.setItem('vc_user', JSON.stringify({ name: formData.fullName, email: formData.email }));
-            setLoading(false);
+        try {
+            const res = await fetch('/api/auth/signup', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    full_name: formData.fullName,
+                    email: formData.email,
+                    password: formData.password,
+                }),
+            });
+            const data = await res.json();
+            if (!res.ok) {
+                // Handle duplicate email or validation errors from the backend
+                const msg = data.detail || 'Signup failed. Please try again.';
+                if (msg.toLowerCase().includes('email')) {
+                    setErrors({ email: msg });
+                } else {
+                    setErrors({ confirmPassword: msg });
+                }
+                return;
+            }
+            // Save JWT and user info
+            localStorage.setItem('vc_token', data.token);
+            localStorage.setItem('vc_user', JSON.stringify({
+                id: data.user.id,
+                name: data.user.full_name,
+                email: data.user.email,
+            }));
             navigate('/dashboard');
-        }, 2000);
+        } catch (err) {
+            setErrors({ confirmPassword: 'Network error. Is the backend running?' });
+        } finally {
+            setLoading(false);
+        }
     };
 
     const Illustration = () => (

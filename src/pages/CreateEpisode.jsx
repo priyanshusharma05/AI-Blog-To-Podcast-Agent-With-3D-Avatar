@@ -112,7 +112,10 @@ const CreateEpisode = () => {
     const [title, setTitle] = useState('');
     const [blogUrl, setBlogUrl] = useState('');
     const [pasteText, setPasteText] = useState('');
-    const [status, setStatus] = useState('idle'); // 'idle' | 'generating' | 'done'
+    const [status, setStatus] = useState('idle'); // 'idle' | 'generating' | 'done' | 'error'
+    const [generatedScript, setGeneratedScript] = useState('');
+    const [apiError, setApiError] = useState('');
+    const [selectedTone, setSelectedTone] = useState('Conversational');
     const [isDark, setIsDark] = useState(() => {
         return document.documentElement.classList.contains('dark');
     });
@@ -152,32 +155,43 @@ const CreateEpisode = () => {
 
     const canGenerate = inputMode === 'url' ? blogUrl.trim() !== '' : pasteText.trim() !== '';
 
-    const handleGenerate = (e) => {
+    const handleGenerate = async (e) => {
         e.preventDefault();
         if (!canGenerate) return;
         setStatus('generating');
-        
-        // Simulate generation then save to localStorage
-        setTimeout(() => {
-            const stored = localStorage.getItem('vc_episodes');
-            const episodes = stored ? JSON.parse(stored) : [];
-            
-            const newEpisode = {
-                id: Date.now(),
-                title: title || 'Untitled AI Episode',
-                desc: inputMode === 'url' ? `Generated from: ${blogUrl}` : pasteText.slice(0, 80) + '...',
-                status: 'ready',
-                date: new Date().toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: '2-digit' }),
-                duration: '3 min',
-                views: 0,
-                tags: ['AI', 'Generated']
-            };
-            
-            const updated = [newEpisode, ...episodes];
-            localStorage.setItem('vc_episodes', JSON.stringify(updated));
-            
+        setApiError('');
+        setGeneratedScript('');
+
+        const payload = {
+            title: title.trim() || undefined,
+            voice_tone: selectedTone,
+        };
+        if (inputMode === 'url') {
+            payload.url = blogUrl.trim();
+        } else {
+            payload.text = pasteText.trim();
+        }
+
+        try {
+            const res = await fetch('/api/podcast/generate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload),
+            });
+            const data = await res.json();
+
+            if (!res.ok) {
+                setApiError(data.detail || 'Generation failed. Please try again.');
+                setStatus('error');
+                return;
+            }
+
+            setGeneratedScript(data.script);
             setStatus('done');
-        }, 3000);
+        } catch (err) {
+            setApiError('Network error. Is the backend running on port 8000?');
+            setStatus('error');
+        }
     };
 
     return (
@@ -430,7 +444,7 @@ const CreateEpisode = () => {
                                             { label: 'Professional', emoji: '🎙️', desc: 'Formal & clear' },
                                             { label: 'Energetic', emoji: '⚡', desc: 'Lively & upbeat' },
                                         ].map(({ label, emoji, desc }) => (
-                                            <VoiceToneCard key={label} label={label} emoji={emoji} desc={desc} isDark={isDark} />
+                                            <VoiceToneCard key={label} label={label} emoji={emoji} desc={desc} isDark={isDark} selected={selectedTone === label} onSelect={setSelectedTone} />
                                         ))}
                                     </div>
                                 </div>
@@ -455,6 +469,33 @@ const CreateEpisode = () => {
                                     )}
                                 </motion.button>
 
+                                {/* Error state */}
+                                <AnimatePresence>
+                                    {status === 'error' && (
+                                        <motion.div
+                                            initial={{ opacity: 0, y: 8 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            exit={{ opacity: 0 }}
+                                            className="bg-red-50 border border-red-200 rounded-2xl p-5 flex items-start gap-4"
+                                        >
+                                            <div className="w-9 h-9 rounded-xl bg-red-100 flex items-center justify-center shrink-0">
+                                                <Zap size={18} className="text-red-600" />
+                                            </div>
+                                            <div>
+                                                <p className="text-sm font-black text-red-800">Generation failed</p>
+                                                <p className="text-xs text-red-600 font-medium mt-0.5">{apiError}</p>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setStatus('idle')}
+                                                    className="mt-3 text-xs font-black text-red-700 hover:text-red-900 transition-colors"
+                                                >
+                                                    Try Again
+                                                </button>
+                                            </div>
+                                        </motion.div>
+                                    )}
+                                </AnimatePresence>
+
                                 {/* Success state */}
                                 <AnimatePresence>
                                     {status === 'done' && (
@@ -462,18 +503,33 @@ const CreateEpisode = () => {
                                             initial={{ opacity: 0, y: 8 }}
                                             animate={{ opacity: 1, y: 0 }}
                                             exit={{ opacity: 0 }}
-                                            className="bg-emerald-50 border border-emerald-200 rounded-2xl p-5 flex items-start gap-4"
+                                            className="bg-emerald-50 border border-emerald-200 rounded-2xl p-5 space-y-3"
                                         >
-                                            <div className="w-9 h-9 rounded-xl bg-emerald-100 flex items-center justify-center shrink-0">
-                                                <CheckCircle2 size={18} className="text-emerald-600" />
+                                            <div className="flex items-start gap-4">
+                                                <div className="w-9 h-9 rounded-xl bg-emerald-100 flex items-center justify-center shrink-0">
+                                                    <CheckCircle2 size={18} className="text-emerald-600" />
+                                                </div>
+                                                <div>
+                                                    <p className="text-sm font-black text-emerald-800">Script generated successfully!</p>
+                                                    <p className="text-xs text-emerald-600 font-medium mt-0.5">Your episode has been saved to MongoDB. Check My Episodes.</p>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => navigate('/episodes')}
+                                                        className="mt-3 flex items-center gap-1.5 text-xs font-black text-emerald-700 hover:text-emerald-900 transition-colors"
+                                                    >
+                                                        View in My Episodes <ArrowRight size={12} />
+                                                    </button>
+                                                </div>
                                             </div>
-                                            <div>
-                                                <p className="text-sm font-black text-emerald-800">Script generated successfully!</p>
-                                                <p className="text-xs text-emerald-600 font-medium mt-0.5">Your podcast script is ready. Continue to voice & avatar rendering.</p>
-                                                <button className="mt-3 flex items-center gap-1.5 text-xs font-black text-emerald-700 hover:text-emerald-900 transition-colors">
-                                                    Continue to Voice Synthesis <ArrowRight size={12} />
-                                                </button>
-                                            </div>
+                                            {/* Script preview */}
+                                            {generatedScript && (
+                                                <div className="bg-white/60 rounded-xl p-4 border border-emerald-100">
+                                                    <p className="text-[10px] font-black uppercase tracking-widest text-emerald-700 mb-2">Script Preview</p>
+                                                    <p className="text-xs text-slate-600 leading-relaxed line-clamp-6 whitespace-pre-wrap">
+                                                        {generatedScript.slice(0, 600)}{generatedScript.length > 600 ? '...' : ''}
+                                                    </p>
+                                                </div>
+                                            )}
                                         </motion.div>
                                     )}
                                 </AnimatePresence>
@@ -514,12 +570,11 @@ const CreateEpisode = () => {
 };
 
 /* ─── Voice Tone Card ────────────────────────────── */
-const VoiceToneCard = ({ label, emoji, desc, isDark }) => {
-    const [selected, setSelected] = useState(label === 'Conversational');
+const VoiceToneCard = ({ label, emoji, desc, isDark, selected, onSelect }) => {
     return (
         <button
             type="button"
-            onClick={() => setSelected((p) => !p)}
+            onClick={() => onSelect(label)}
             className={`flex flex-col items-center gap-1.5 p-3.5 rounded-2xl border text-center transition-all ${selected
                 ? 'bg-teal-50 dark:bg-teal-500/10 border-teal-200 dark:border-teal-500/30 shadow-sm'
                 : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:border-teal-200 hover:bg-teal-50/40 dark:hover:bg-teal-500/5'

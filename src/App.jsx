@@ -8,6 +8,7 @@ import CreateEpisode from './pages/CreateEpisode';
 import MyEpisodes from './pages/MyEpisodes';
 import Analytics from './pages/Analytics';
 import Settings from './pages/Settings';
+import VideoPlayer from './pages/VideoPlayer';
 
 function App() {
   return (
@@ -21,6 +22,7 @@ function App() {
         <Route path="/episodes" element={<MyEpisodes />} />
         <Route path="/analytics" element={<Analytics />} />
         <Route path="/settings" element={<Settings />} />
+        <Route path="/episode/:id" element={<VideoPlayer />} />
       </Routes>
     </Router>
   );

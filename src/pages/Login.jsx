@@ -28,7 +28,7 @@ const Login = () => {
         return errs;
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
         const errs = validate();
         if (Object.keys(errs).length > 0) {
@@ -37,14 +37,33 @@ const Login = () => {
         }
         setErrors({});
         setLoading(true);
-        setTimeout(() => {
-            // derive a display name from the email (e.g. "john.doe@..." → "John Doe")
-            const namePart = formData.email.split('@')[0].replace(/[._]/g, ' ');
-            const displayName = namePart.charAt(0).toUpperCase() + namePart.slice(1);
-            localStorage.setItem('vc_user', JSON.stringify({ name: displayName, email: formData.email }));
-            setLoading(false);
+        try {
+            const res = await fetch('/api/auth/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    email: formData.email,
+                    password: formData.password,
+                }),
+            });
+            const data = await res.json();
+            if (!res.ok) {
+                setErrors({ password: data.detail || 'Invalid email or password.' });
+                return;
+            }
+            // Save JWT and user info for the rest of the app
+            localStorage.setItem('vc_token', data.token);
+            localStorage.setItem('vc_user', JSON.stringify({
+                id: data.user.id,
+                name: data.user.full_name,
+                email: data.user.email,
+            }));
             navigate('/dashboard');
-        }, 2000);
+        } catch (err) {
+            setErrors({ password: 'Network error. Is the backend running?' });
+        } finally {
+            setLoading(false);
+        }
     };
 
     const Illustration = () => (

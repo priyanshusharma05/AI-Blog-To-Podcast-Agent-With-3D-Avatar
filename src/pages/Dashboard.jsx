@@ -40,16 +40,6 @@ const StatusBadge = ({ status }) => {
 };
 
 /* ─── Stats config ───────────────────────────────── */
-const EPISODES = [
-    { id: 1, title: 'The Future of AI in Creative Industries', desc: 'Exploring how AI is transforming creative industries from art and design to music and writing.', status: 'ready', duration: '4 min', date: 'Mar 11, 2026', views: 0, tags: ['AI', 'Tech'] },
-    { id: 2, title: 'Remote Work Revolution: What We Learned', desc: 'A deep dive into the lessons learned from the global shift to remote work and what comes next.', status: 'ready', duration: '3 min', date: 'Mar 11, 2026', views: 0, tags: ['Work', 'Remote'] },
-    { id: 3, title: 'Understanding Blockchain Beyond Crypto', desc: 'Exploring the vast potential of blockchain technology beyond cryptocurrency applications.', status: 'draft', duration: '4 min', date: 'Mar 11, 2026', views: 0, tags: ['Crypto', 'Tech'] },
-    { id: 4, title: 'Sustainable Living: Simple Daily Habits', desc: 'Small changes you can make today to live a more eco-friendly and sustainable lifestyle.', status: 'generating', duration: '--', date: 'Mar 12, 2026', views: 0, tags: ['Nature'] },
-    { id: 5, title: 'The Rise of Personal Branding', desc: 'Why personal branding is more important than ever in the digital age.', status: 'ready', duration: '5 min', date: 'Mar 10, 2026', views: 0, tags: ['Brand'] },
-    { id: 6, title: 'Mental Health in the Tech Industry', desc: 'Addressing the unique challenges and importance of mental wellness in fast-paced tech roles.', status: 'ready', duration: '4 min', date: 'Mar 09, 2026', views: 0, tags: ['Health'] },
-    { id: 7, title: 'AI Ethics: Navigating the New Frontier', desc: 'Discussing the responsibility of AI developers and common ethical dilemmas in the field.', status: 'draft', duration: '6 min', date: 'Mar 12, 2026', views: 0, tags: ['AI', 'Ethics'] },
-    { id: 8, title: 'The Evolution of E-commerce', desc: 'How digital shopping experiences have changed over the last decade.', status: 'ready', duration: '7 min', date: 'Mar 08, 2026', views: 0, tags: ['Shop'] },
-];
 
 /* ─── Color map ──────────────────────────────────── */
 const COLORS = {
@@ -101,41 +91,32 @@ const Dashboard = () => {
         .slice(0, 2);
 
     const [episodes, setEpisodes] = useState([]);
+    const [episodesLoading, setEpisodesLoading] = useState(true);
 
     useEffect(() => {
-        const loadEpisodes = () => {
+        const fetchEpisodes = async () => {
+            setEpisodesLoading(true);
             try {
-                const storedEpisodes = localStorage.getItem('vc_episodes');
-                if (storedEpisodes && storedEpisodes !== 'undefined' && storedEpisodes !== 'null') {
-                    const parsed = JSON.parse(storedEpisodes);
-                    if (Array.isArray(parsed)) {
-                        setEpisodes(parsed);
-                        return;
-                    }
-                }
+                const res = await fetch('/api/episodes/');
+                if (!res.ok) throw new Error(`Server error: ${res.status}`);
+                const data = await res.json();
+                setEpisodes(Array.isArray(data) ? data : []);
             } catch (err) {
                 console.error('Failed to load episodes:', err);
+                setEpisodes([]);
+            } finally {
+                setEpisodesLoading(false);
             }
-            // Fallback to dummy data mapping if parsing fails or no data
-            localStorage.setItem('vc_episodes', JSON.stringify(EPISODES));
-            setEpisodes(EPISODES);
         };
-        loadEpisodes();
+        fetchEpisodes();
     }, []);
 
     const handlePlayEpisode = (id) => {
-        const updatedEpisodes = episodes.map(ep => {
-            if (ep.id === id) {
-                return { ...ep, views: (ep.views || 0) + 1 };
-            }
-            return ep;
-        });
-        setEpisodes(updatedEpisodes);
-        localStorage.setItem('vc_episodes', JSON.stringify(updatedEpisodes));
-        
-        const ep = updatedEpisodes.find(e => e.id === id);
-        if (ep) {
-            alert(`Playing: ${ep.title}`);
+        const ep = episodes.find(e => e.id === id);
+        if (ep && (ep.status === 'ready' || ep.id === id)) {
+            navigate(`/episode/${id}`);
+        } else {
+            alert("This episode is still generating. We'll notify you when it's ready!");
         }
     };
 

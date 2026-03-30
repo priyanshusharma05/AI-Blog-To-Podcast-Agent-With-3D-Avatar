@@ -168,27 +168,27 @@ const MyEpisodes = () => {
         .slice(0, 2);
 
     const [episodes, setEpisodes] = useState([]);
+    const [episodesLoading, setEpisodesLoading] = useState(true);
+    const [episodesError, setEpisodesError] = useState('');
 
     useEffect(() => {
-        console.log('MyEpisodes: useEffect [loadEpisodes]');
-        const loadEpisodes = () => {
+        const fetchEpisodes = async () => {
+            setEpisodesLoading(true);
+            setEpisodesError('');
             try {
-                const storedEpisodes = localStorage.getItem('vc_episodes');
-                if (storedEpisodes && storedEpisodes !== 'undefined' && storedEpisodes !== 'null') {
-                    const parsed = JSON.parse(storedEpisodes);
-                    if (Array.isArray(parsed)) {
-                        setEpisodes(parsed);
-                        return;
-                    }
-                }
+                const res = await fetch('/api/episodes/');
+                if (!res.ok) throw new Error(`Server error: ${res.status}`);
+                const data = await res.json();
+                setEpisodes(Array.isArray(data) ? data : []);
             } catch (err) {
                 console.error('Failed to load episodes:', err);
+                setEpisodesError('Could not load episodes. Is the backend running?');
+                setEpisodes([]);
+            } finally {
+                setEpisodesLoading(false);
             }
-            // Fallback to dummy data mapping if parsing fails or no data
-            localStorage.setItem('vc_episodes', JSON.stringify(DUMMY_EPISODES));
-            setEpisodes(DUMMY_EPISODES);
         };
-        loadEpisodes();
+        fetchEpisodes();
     }, []);
 
     const handlePlayEpisode = (id) => {
@@ -206,14 +206,21 @@ const MyEpisodes = () => {
         });
         setEpisodes(updated);
         localStorage.setItem('vc_episodes', JSON.stringify(updated));
-        alert(`Playing: ${ep.title}`);
+        navigate(`/episode/${id}`);
     };
 
-    const handleDeleteEpisode = (id) => {
+    const handleDeleteEpisode = async (id) => {
         if (window.confirm('Are you sure you want to delete this episode?')) {
-            const updated = episodes.filter(ep => ep.id !== id);
-            setEpisodes(updated);
-            localStorage.setItem('vc_episodes', JSON.stringify(updated));
+            try {
+                const res = await fetch(`/api/episodes/${id}`, { method: 'DELETE' });
+                if (res.ok || res.status === 204) {
+                    setEpisodes((prev) => prev.filter((ep) => ep.id !== id));
+                } else {
+                    alert('Failed to delete episode.');
+                }
+            } catch (err) {
+                alert('Network error. Could not delete episode.');
+            }
         }
     };
 
@@ -405,6 +412,20 @@ const MyEpisodes = () => {
 
                 {/* Episodes Grid */}
                 <div className="flex-1 px-6 md:px-10 py-6 max-w-[1400px]">
+                    {/* Loading state */}
+                    {episodesLoading && (
+                        <div className="flex items-center justify-center py-24">
+                            <Loader2 size={32} className="text-[#0D9488] animate-spin" />
+                            <p className="ml-3 text-slate-500 text-sm font-medium">Loading episodes from MongoDB...</p>
+                        </div>
+                    )}
+                    {/* Error state */}
+                    {!episodesLoading && episodesError && (
+                        <div className="flex flex-col items-center justify-center py-24 text-center">
+                            <p className="text-sm font-black text-red-500">{episodesError}</p>
+                            <p className="text-xs text-slate-400 mt-2">Make sure the FastAPI backend is running on port 8000.</p>
+                        </div>
+                    )}
                     <AnimatePresence mode="popLayout">
                         {(filteredEpisodes || []).length === 0 ? (
                             <motion.div
@@ -446,7 +467,9 @@ const MyEpisodes = () => {
                                         className="group relative bg-teal-50/30 dark:bg-slate-900 rounded-[24px] overflow-hidden flex flex-col border border-teal-100/50 dark:border-slate-800 hover:border-teal-500/30 transition-all shadow-xl"
                                     >
                                         {/* Visual/Image Area */}
-                                        <div className="relative h-48 bg-gradient-to-br from-teal-50 to-teal-100/50 dark:from-[#1A1D29] dark:to-[#0A0B12] flex items-center justify-center overflow-hidden">
+                                        <div 
+                                            onClick={() => handlePlayEpisode(ep.id)}
+                                            className="relative h-48 bg-gradient-to-br from-teal-50 to-teal-100/50 dark:from-[#1A1D29] dark:to-[#0A0B12] flex items-center justify-center overflow-hidden cursor-pointer">
                                             {/* decorative glowing circle */}
                                             <div className="absolute inset-0 bg-teal-500/5 opacity-0 group-hover:opacity-100 transition-opacity" />
                                             <div className="relative z-10 w-16 h-16 rounded-3xl bg-white/50 dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center justify-center backdrop-blur-md">
