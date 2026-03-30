@@ -87,31 +87,30 @@ const Analytics = () => {
     });
 
     useEffect(() => {
-        const loadStats = () => {
+        const loadStats = async () => {
             try {
-                const stored = localStorage.getItem('vc_episodes');
-                if (stored && stored !== 'undefined' && stored !== 'null') {
-                    const episodes = JSON.parse(stored);
-                    if (Array.isArray(episodes)) {
-                        const totalCreated = episodes.length;
-                        const totalViews = episodes.reduce((sum, ep) => sum + (ep.views || 0), 0);
-                        
-                        setStats({
-                            created: totalCreated,
-                            watched: totalViews,
-                            recentGrowth: totalCreated > 0 ? `+${(totalCreated * 1.5).toFixed(1)}% growth` : '+0% growth'
-                        });
+                const res = await fetch('/api/episodes/');
+                if (!res.ok) throw new Error(`Server error: ${res.status}`);
+                const episodes = await res.json();
+                if (Array.isArray(episodes)) {
+                    const totalCreated = episodes.length;
+                    const totalViews = episodes.reduce((sum, ep) => sum + (ep.views || 0), 0);
 
-                        // Sort and get top episodes
-                        const sorted = [...episodes]
-                            .sort((a, b) => (b.views || 0) - (a.views || 0))
-                            .slice(0, 5);
-                        setTopEpisodes(sorted);
-                        return;
-                    }
+                    setStats({
+                        created: totalCreated,
+                        watched: totalViews,
+                        recentGrowth: totalCreated > 0 ? `+${(totalCreated * 1.5).toFixed(1)}% growth` : '+0% growth'
+                    });
+
+                    // Sort and get top episodes
+                    const sorted = [...episodes]
+                        .sort((a, b) => (b.views || 0) - (a.views || 0))
+                        .slice(0, 5);
+                    setTopEpisodes(sorted);
+                    return;
                 }
             } catch (err) {
-                console.error('Failed to parse analytics data:', err);
+                console.error('Failed to load analytics data:', err);
             }
             setStats({ created: 0, watched: 0, recentGrowth: '+0% growth' });
             setTopEpisodes([]);

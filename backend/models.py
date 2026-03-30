@@ -23,15 +23,15 @@ class LoginRequest(BaseModel):
     password: str = Field(..., min_length=1)
 
 
-class AuthResponse(BaseModel):
-    token: str
-    user: UserPublic
-
-
 class UserPublic(BaseModel):
     id: str
     full_name: str
     email: str
+
+
+class AuthResponse(BaseModel):
+    token: str
+    user: UserPublic
 
 
 # ─── Podcast Generation ───────────────────────────────────────────────────────

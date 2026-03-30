@@ -444,7 +444,7 @@ const CreateEpisode = () => {
                                             { label: 'Professional', emoji: '🎙️', desc: 'Formal & clear' },
                                             { label: 'Energetic', emoji: '⚡', desc: 'Lively & upbeat' },
                                         ].map(({ label, emoji, desc }) => (
-                                            <VoiceToneCard key={label} label={label} emoji={emoji} desc={desc} isDark={isDark} />
+                                            <VoiceToneCard key={label} label={label} emoji={emoji} desc={desc} isDark={isDark} selected={selectedTone === label} onSelect={setSelectedTone} />
                                         ))}
                                     </div>
                                 </div>
@@ -570,12 +570,11 @@ const CreateEpisode = () => {
 };
 
 /* ─── Voice Tone Card ────────────────────────────── */
-const VoiceToneCard = ({ label, emoji, desc, isDark }) => {
-    const [selected, setSelected] = useState(label === 'Conversational');
+const VoiceToneCard = ({ label, emoji, desc, isDark, selected, onSelect }) => {
     return (
         <button
             type="button"
-            onClick={() => setSelected((p) => !p)}
+            onClick={() => onSelect(label)}
             className={`flex flex-col items-center gap-1.5 p-3.5 rounded-2xl border text-center transition-all ${selected
                 ? 'bg-teal-50 dark:bg-teal-500/10 border-teal-200 dark:border-teal-500/30 shadow-sm'
                 : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:border-teal-200 hover:bg-teal-50/40 dark:hover:bg-teal-500/5'
