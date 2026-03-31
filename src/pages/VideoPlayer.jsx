@@ -233,30 +233,26 @@ const VideoPlayer = () => {
         synth.speak(utt);
     };
 
-    // ── TTS: Play / Pause (cancel + restart from saved position) ──────────
+    // ── TTS: Play / Pause / Resume ───────────────────────────────────────────
     useEffect(() => {
         if (!episode?.script) return;
         const synth = window.speechSynthesis;
 
         if (isPlaying) {
-            // Always cancel first to clear any stale state
-            synth.cancel();
-
-            // Build the queue if not already built
-            if (!ttsQueueRef.current.length) {
+            if (synth.paused) {
+                synth.resume();
+            } else if (!synth.speaking) {
+                // Start fresh
+                synth.cancel();
                 ttsQueueRef.current = buildTtsQueue(episode.script);
                 ttsIndexRef.current = 0;
+                ttsActiveRef.current = true;
+                speakNext();
             }
-
-            ttsActiveRef.current = true;
-            // Small delay to let cancel() finish before speaking
-            setTimeout(() => {
-                if (ttsActiveRef.current) speakNext();
-            }, 100);
         } else {
-            // Stop speaking — current chunk index is preserved for resume
-            ttsActiveRef.current = false;
-            synth.cancel();
+            if (synth.speaking && !synth.paused) {
+                synth.pause();
+            }
         }
     }, [isPlaying]);
 
@@ -268,50 +264,13 @@ const VideoPlayer = () => {
         };
     }, []);
 
-    // ── TTS: Seek to a specific time position ────────────────────────────────
-    const seekToTime = (targetSeconds) => {
-        const clamped = Math.max(0, Math.min(targetSeconds, totalDuration));
-        setCurrentTime(clamped);
-        setProgress((clamped / totalDuration) * 100);
-
-        // If we have a queue, jump to the right chunk
-        if (ttsQueueRef.current.length > 0 && isPlaying) {
-            const fraction = clamped / totalDuration;
-            const targetChunk = Math.min(
-                Math.floor(fraction * ttsQueueRef.current.length),
-                ttsQueueRef.current.length - 1
-            );
-            ttsIndexRef.current = targetChunk;
-
-            // Cancel and restart from the new chunk
-            const synth = window.speechSynthesis;
-            synth.cancel();
-            ttsActiveRef.current = true;
-            setTimeout(() => {
-                if (ttsActiveRef.current) speakNext();
-            }, 100);
-        } else if (ttsQueueRef.current.length > 0) {
-            // Not playing — just update the chunk index so resume starts from here
-            const fraction = clamped / totalDuration;
-            ttsIndexRef.current = Math.min(
-                Math.floor(fraction * ttsQueueRef.current.length),
-                ttsQueueRef.current.length - 1
-            );
-        }
-    };
-
-    // ── Progress timer while playing ──────────────────────────────────────
-    // Timer does NOT stop playback. Only TTS onend (in speakNext) stops it.
+    // ── Fake progress timer while playing ─────────────────────────────────
     useEffect(() => {
         let interval;
         if (isPlaying && episode) {
             interval = setInterval(() => {
+                setProgress(prev => (prev >= 100 ? 100 : prev + 0.1));
                 setCurrentTime(prev => prev + 1);
-                // Cap visual progress at 99% — TTS onend sets 100%
-                setProgress(prev => {
-                    const next = prev + (100 / Math.max(totalDuration, 1));
-                    return next >= 99.5 ? 99 : next;
-                });
             }, 1000);
         }
         return () => clearInterval(interval);
@@ -382,16 +341,12 @@ const VideoPlayer = () => {
     };
 
     const formatTime = (seconds) => {
-        const s = Math.floor(Math.max(0, seconds));
-        const mins = Math.floor(s / 60);
-        const secs = s % 60;
+        const mins = Math.floor(seconds / 60);
+        const secs = seconds % 60;
         return `${mins}:${secs.toString().padStart(2, '0')}`;
     };
 
-    // Calculate real duration from script word count (~150 words per minute for TTS)
-    const totalDuration = episode?.script
-        ? Math.max(60, Math.round((episode.script.split(/\s+/).length / 150) * 60))
-        : 300;
+    const totalDuration = episode ? (parseInt(episode.duration) || 5) * 60 : 300;
 
     const toggleFullscreen = () => {
         if (!playerRef.current) return;
@@ -482,12 +437,12 @@ const VideoPlayer = () => {
                         
                         {/* Cinema Player */}
                         <section className={`relative group transition-all duration-500 overflow-hidden ${isFullscreen ? 'fixed inset-0 z-50 rounded-0' : 'rounded-[32px]'}`} ref={playerRef}>
-                            <div className={`relative bg-[#000] overflow-hidden transition-all duration-500 ${isFullscreen ? 'w-full h-full' : 'rounded-[32px] shadow-[0_32px_64px_-16px_rgba(0,0,0,0.5)] border border-white/5'}`} style={isFullscreen ? {} : { height: '380px' }}>
+                            <div className={`relative bg-[#000] overflow-hidden transition-all duration-500 ${isFullscreen ? 'w-full h-full' : 'aspect-video rounded-[32px] shadow-[0_32px_64px_-16px_rgba(0,0,0,0.5)] border border-white/5'}`}>
                                 {/* Ambient Glow */}
                                 <div className="absolute inset-0 bg-gradient-to-b from-teal-500/5 to-transparent pointer-events-none" />
                                 
                                 {/* Animated Visual Content */}
-                                <div className="absolute inset-0 flex flex-col items-center justify-center gap-4">
+                                <div className="absolute inset-0 flex flex-col items-center justify-center gap-8">
                                     <motion.div 
                                         animate={isPlaying ? { 
                                             scale: [1, 1.05, 1],
@@ -496,9 +451,9 @@ const VideoPlayer = () => {
                                         transition={{ duration: 4, repeat: Infinity }}
                                         className="relative"
                                     >
-                                        <div className="w-20 h-20 rounded-[28px] bg-gradient-to-br from-[#0D9488] to-teal-400 p-[2px] shadow-[0_0_50px_rgba(13,148,136,0.3)]">
-                                            <div className="w-full h-full bg-[#0D0F11] rounded-[26px] flex items-center justify-center">
-                                                <Mic size={32} className="text-[#0D9488] group-hover:scale-110 transition-transform duration-500" />
+                                        <div className="w-32 h-32 rounded-[40px] bg-gradient-to-br from-[#0D9488] to-teal-400 p-[2px] shadow-[0_0_50px_rgba(13,148,136,0.3)]">
+                                            <div className="w-full h-full bg-[#0D0F11] rounded-[38px] flex items-center justify-center">
+                                                <Mic size={48} className="text-[#0D9488] group-hover:scale-110 transition-transform duration-500" />
                                             </div>
                                         </div>
                                         {isPlaying && (
@@ -527,7 +482,8 @@ const VideoPlayer = () => {
                                             onClick={(e) => {
                                                 const rect = e.currentTarget.getBoundingClientRect();
                                                 const pct = ((e.clientX - rect.left) / rect.width) * 100;
-                                                seekToTime(Math.floor((pct / 100) * totalDuration));
+                                                setProgress(pct);
+                                                setCurrentTime(Math.floor((pct/100) * totalDuration));
                                             }}
                                         >
                                             <motion.div 
@@ -543,7 +499,7 @@ const VideoPlayer = () => {
 
                                     <div className="flex items-center justify-between">
                                         <div className="flex items-center gap-6">
-                                            <button onClick={() => seekToTime(Math.max(0, currentTime - 10))} className="text-white/50 hover:text-white transition-colors">
+                                            <button onClick={() => { setProgress(Math.max(0, progress-5)); setCurrentTime(Math.max(0, currentTime-10)); }} className="text-white/50 hover:text-white transition-colors">
                                                 <SkipBack size={24} />
                                             </button>
                                             <motion.button 
@@ -554,7 +510,7 @@ const VideoPlayer = () => {
                                             >
                                                 {isPlaying ? <Pause size={28} fill="currentColor" /> : <Play size={28} fill="currentColor" className="ml-1" />}
                                             </motion.button>
-                                            <button onClick={() => seekToTime(Math.min(totalDuration, currentTime + 10))} className="text-white/50 hover:text-white transition-colors">
+                                            <button onClick={() => { setProgress(Math.min(100, progress+5)); setCurrentTime(Math.min(totalDuration, currentTime+10)); }} className="text-white/50 hover:text-white transition-colors">
                                                 <SkipForward size={24} />
                                             </button>
                                         </div>
