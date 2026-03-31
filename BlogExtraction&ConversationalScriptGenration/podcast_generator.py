@@ -45,37 +45,50 @@ def read_text_from_file(path: str) -> str:
 
 
 def call_gemini(prompt: str) -> str:
-    """Send a prompt to the Gemini 2.5 Flash API and return the generated text."""
-    api_key = os.getenv("GEMINI_API_KEY", "").strip()
-    if not api_key:
-        print("Error: GEMINI_API_KEY is not set.")
+    """Send a prompt to Gemini 2.5 Flash API with multi-key rotation on rate limits."""
+    import time
+
+    # Load keys: try GEMINI_API_KEYS (comma-separated), then GEMINI_API_KEY
+    keys_str = os.getenv("GEMINI_API_KEYS", "").strip()
+    if keys_str:
+        api_keys = [k.strip() for k in keys_str.split(",") if k.strip()]
+    else:
+        single = os.getenv("GEMINI_API_KEY", "").strip()
+        api_keys = [single] if single else []
+
+    if not api_keys:
+        print("Error: No Gemini API keys found. Set GEMINI_API_KEYS or GEMINI_API_KEY.")
         return ""
 
-    endpoint = (
-        f"https://generativelanguage.googleapis.com/v1beta/models/"
-        f"{GEMINI_MODEL}:generateContent?key={api_key}"
-    )
     headers = {"Content-Type": "application/json"}
-    payload = {
-        "contents": [
-            {
-                "parts": [
-                    {"text": prompt},
-                ]
-            }
-        ]
-    }
+    payload = {"contents": [{"parts": [{"text": prompt}]}]}
 
-    try:
-        response = requests.post(endpoint, headers=headers, json=payload, timeout=60)
-        response.raise_for_status()
-        data = response.json()
-        candidates = data.get("candidates", [])
-        parts = candidates[0].get("content", {}).get("parts", []) if candidates else []
-        return "".join(part.get("text", "") for part in parts).strip()
-    except (requests.exceptions.RequestException, ValueError, KeyError, IndexError) as exc:
-        print(f"Error: Gemini request failed. {exc}")
-        return ""
+    for attempt in range(len(api_keys) + 1):
+        key = api_keys[attempt % len(api_keys)]
+        endpoint = (
+            f"https://generativelanguage.googleapis.com/v1beta/models/"
+            f"{GEMINI_MODEL}:generateContent?key={key}"
+        )
+        try:
+            response = requests.post(endpoint, headers=headers, json=payload, timeout=60)
+
+            if response.status_code == 429:
+                print(f"⚠️  Key ...{key[-6:]} rate-limited. Trying next key...")
+                if attempt >= len(api_keys) - 1:
+                    print("⏳  All keys exhausted. Waiting 10 seconds...")
+                    time.sleep(10)
+                continue
+
+            response.raise_for_status()
+            data = response.json()
+            candidates = data.get("candidates", [])
+            parts = candidates[0].get("content", {}).get("parts", []) if candidates else []
+            return "".join(part.get("text", "") for part in parts).strip()
+        except (requests.exceptions.RequestException, ValueError, KeyError, IndexError) as exc:
+            print(f"Error: Gemini request failed. {exc}")
+            return ""
+
+    return ""
 
 
 def generate_script_for_chunks(chunks: list[str]) -> str:
