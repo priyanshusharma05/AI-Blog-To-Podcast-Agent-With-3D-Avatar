@@ -70,3 +70,21 @@ class EpisodePatch(BaseModel):
     title: Optional[str] = None
     tags: Optional[list[str]] = None
     status: Optional[Literal["ready", "draft"]] = None
+
+
+# ─── Chat ─────────────────────────────────────────────────────────────────────
+
+class ChatMessage(BaseModel):
+    role: Literal["user", "assistant"]
+    content: str
+
+
+class ChatRequest(BaseModel):
+    message: str = Field(..., min_length=1, max_length=5000)
+    episode_id: Optional[str] = None
+    history: list[ChatMessage] = []
+
+
+class ChatResponse(BaseModel):
+    reply: str
+    history: list[ChatMessage]
