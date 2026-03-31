@@ -112,18 +112,11 @@ const Dashboard = () => {
     }, []);
 
     const handlePlayEpisode = (id) => {
-        const updatedEpisodes = episodes.map(ep => {
-            if (ep.id === id) {
-                return { ...ep, views: (ep.views || 0) + 1 };
-            }
-            return ep;
-        });
-        setEpisodes(updatedEpisodes);
-        localStorage.setItem('vc_episodes', JSON.stringify(updatedEpisodes));
-        
-        const ep = updatedEpisodes.find(e => e.id === id);
-        if (ep) {
-            alert(`Playing: ${ep.title}`);
+        const ep = episodes.find(e => e.id === id);
+        if (ep && (ep.status === 'ready' || ep.id === id)) {
+            navigate(`/episode/${id}`);
+        } else {
+            alert("This episode is still generating. We'll notify you when it's ready!");
         }
     };
 

@@ -206,7 +206,7 @@ const MyEpisodes = () => {
         });
         setEpisodes(updated);
         localStorage.setItem('vc_episodes', JSON.stringify(updated));
-        alert(`Playing: ${ep.title}`);
+        navigate(`/episode/${id}`);
     };
 
     const handleDeleteEpisode = async (id) => {
@@ -467,7 +467,9 @@ const MyEpisodes = () => {
                                         className="group relative bg-teal-50/30 dark:bg-slate-900 rounded-[24px] overflow-hidden flex flex-col border border-teal-100/50 dark:border-slate-800 hover:border-teal-500/30 transition-all shadow-xl"
                                     >
                                         {/* Visual/Image Area */}
-                                        <div className="relative h-48 bg-gradient-to-br from-teal-50 to-teal-100/50 dark:from-[#1A1D29] dark:to-[#0A0B12] flex items-center justify-center overflow-hidden">
+                                        <div 
+                                            onClick={() => handlePlayEpisode(ep.id)}
+                                            className="relative h-48 bg-gradient-to-br from-teal-50 to-teal-100/50 dark:from-[#1A1D29] dark:to-[#0A0B12] flex items-center justify-center overflow-hidden cursor-pointer">
                                             {/* decorative glowing circle */}
                                             <div className="absolute inset-0 bg-teal-500/5 opacity-0 group-hover:opacity-100 transition-opacity" />
                                             <div className="relative z-10 w-16 h-16 rounded-3xl bg-white/50 dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center justify-center backdrop-blur-md">
