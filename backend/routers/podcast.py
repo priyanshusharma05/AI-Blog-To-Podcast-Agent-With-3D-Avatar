@@ -13,6 +13,7 @@ from __future__ import annotations
 import asyncio
 from datetime import datetime, timezone
 
+from bson import ObjectId
 from fastapi import APIRouter, BackgroundTasks, HTTPException, status
 
 from database import get_db
@@ -20,6 +21,7 @@ from models import GenerateRequest, GenerateResponse
 from services.ai import generate_intro_outro, generate_script_from_chunks
 from services.scraper import fetch_text_from_url
 from services.text_processor import clean_text, split_into_chunks
+from services.tts import generate_audio
 
 router = APIRouter(prefix="/api/podcast", tags=["Podcast"])
 
@@ -30,8 +32,33 @@ async def _run_in_thread(func, *args):
     return await loop.run_in_executor(None, func, *args)
 
 
+async def _generate_audio_background(episode_id: str, script: str):
+    """Background task: generate MP3 audio and update the episode in MongoDB."""
+    try:
+        # Run blocking TTS in thread pool
+        _final_path, duration_min = await _run_in_thread(generate_audio, script, episode_id)
+        audio_url = f"/api/audio/{episode_id}.mp3"
+        db = get_db()
+        await db.episodes.update_one(
+            {"_id": ObjectId(episode_id)},
+            {"$set": {
+                "audio_url": audio_url,
+                "status": "ready",
+                "duration": f"{duration_min} min",
+            }},
+        )
+        print(f"✅ Audio ready for episode {episode_id}: {audio_url}")
+    except Exception as exc:
+        print(f"❌ Audio generation failed for {episode_id}: {exc}")
+        db = get_db()
+        await db.episodes.update_one(
+            {"_id": ObjectId(episode_id)},
+            {"$set": {"status": "ready", "audio_error": str(exc)}},
+        )
+
+
 @router.post("/generate", response_model=GenerateResponse, status_code=status.HTTP_200_OK)
-async def generate_episode(body: GenerateRequest):
+async def generate_episode(body: GenerateRequest, background_tasks: BackgroundTasks):
     """
     Full AI pipeline:
     1. Fetch/validate blog content (URL scrape OR raw text)
@@ -107,7 +134,7 @@ async def generate_episode(body: GenerateRequest):
         "title": episode_title,
         "desc": desc,
         "script": final_script,
-        "status": "ready",
+        "status": "generating",
         "date": datetime.now(timezone.utc).strftime("%b %d, %Y"),
         "duration": duration_str,
         "views": 0,
@@ -115,15 +142,19 @@ async def generate_episode(body: GenerateRequest):
         "user_id": user_id,
         "voice_tone": body.voice_tone,
         "source_url": body.url or "",
+        "audio_url": "",
         "created_at": datetime.now(timezone.utc),
     }
 
     result = await db.episodes.insert_one(episode_doc)
     episode_id = str(result.inserted_id)
 
+    # Kick off audio generation in the background
+    background_tasks.add_task(_generate_audio_background, episode_id, final_script)
+
     return GenerateResponse(
         episode_id=episode_id,
         title=episode_title,
         script=final_script,
-        status="ready",
+        status="generating",
     )

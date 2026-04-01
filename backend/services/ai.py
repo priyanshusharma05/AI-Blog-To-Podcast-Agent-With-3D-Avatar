@@ -5,6 +5,7 @@ services/ai.py — Gemini 2.5 Flash API wrapper (single key).
 from __future__ import annotations
 
 import os
+import time
 
 import requests
 from dotenv import load_dotenv
@@ -27,34 +28,49 @@ def call_gemini(prompt: str) -> str:
         "contents": [{"parts": [{"text": prompt}]}]
     }
 
-    try:
-        print(f"🔑 Calling Gemini ({GEMINI_MODEL})...")
-        resp = requests.post(
-            endpoint,
-            headers={"Content-Type": "application/json"},
-            json=payload,
-            timeout=90,
-        )
-        print(f"📡 Response status: {resp.status_code}")
+    max_retries = 3
+    base_delay = 5
 
-        if resp.status_code != 200:
-            error_body = resp.text[:500]
-            raise RuntimeError(f"Gemini API error (HTTP {resp.status_code}): {error_body}")
+    for attempt in range(max_retries):
+        try:
+            print(f"🔑 Calling Gemini ({GEMINI_MODEL}), attempt {attempt + 1}/{max_retries}...")
+            resp = requests.post(
+                endpoint,
+                headers={"Content-Type": "application/json"},
+                json=payload,
+                timeout=90,
+            )
+            print(f"📡 Response status: {resp.status_code}")
 
-        data = resp.json()
-        candidates = data.get("candidates", [])
-        parts = (
-            candidates[0].get("content", {}).get("parts", [])
-            if candidates
-            else []
-        )
-        text = "".join(p.get("text", "") for p in parts).strip()
-        if not text:
-            print(f"⚠️  Empty response from Gemini. Raw: {str(data)[:300]}")
-        return text
+            if resp.status_code == 429:
+                print(f"⏳ Rate limited (429). Waiting before retry...")
+                time.sleep(base_delay * (2 ** attempt))
+                continue
 
-    except requests.RequestException as exc:
-        raise RuntimeError(f"Gemini API request failed: {exc}") from exc
+            if resp.status_code != 200:
+                error_body = resp.text[:500]
+                raise RuntimeError(f"Gemini API error (HTTP {resp.status_code}): {error_body}")
+
+            data = resp.json()
+            candidates = data.get("candidates", [])
+            parts = (
+                candidates[0].get("content", {}).get("parts", [])
+                if candidates
+                else []
+            )
+            text = "".join(p.get("text", "") for p in parts).strip()
+            if not text:
+                print(f"⚠️  Empty response from Gemini. Raw: {str(data)[:300]}")
+            return text
+
+        except requests.RequestException as exc:
+            if attempt == max_retries - 1:
+                raise RuntimeError(f"Gemini API request failed: {exc}") from exc
+            else:
+                print(f"⏳ Request Exception: {exc}. Retrying...")
+                time.sleep(base_delay * (2 ** attempt))
+
+    raise RuntimeError("Gemini API failed after all retries due to rate limiting.")
 
 
 def generate_script_from_chunks(
