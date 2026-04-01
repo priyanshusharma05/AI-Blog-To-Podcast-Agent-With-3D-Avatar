@@ -48,6 +48,7 @@ class GenerateResponse(BaseModel):
     title: str
     script: str
     status: str = "ready"
+    audio_url: Optional[str] = None
 
 
 # ─── Episodes ─────────────────────────────────────────────────────────────────
@@ -63,6 +64,7 @@ class EpisodeModel(BaseModel):
     views: int = 0
     tags: list[str] = []
     user_id: str
+    audio_url: Optional[str] = None
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
 

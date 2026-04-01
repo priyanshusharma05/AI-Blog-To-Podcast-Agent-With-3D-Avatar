@@ -104,7 +104,11 @@ const VideoPlayer = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
 
-    // Chat state
+    // Audio state
+    const [audioReady, setAudioReady] = useState(false);
+    const [audioUrl, setAudioUrl] = useState('');
+    const audioRef = useRef(null);
+    const [audioDuration, setAudioDuration] = useState(0);
     const [chatMessages, setChatMessages] = useState([
         { id: 1, user: 'System', avatar: '🎙️', text: 'Welcome to the Live Experience! Ask the AI anything about this episode.', time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), isOwn: false },
     ]);
@@ -136,6 +140,7 @@ const VideoPlayer = () => {
     const userName = user.name || 'Guest';
     const initials = userName.split(' ').map(w => w ? w[0] : '').join('').toUpperCase().slice(0, 2);
 
+    // ── Fetch episode data ──────────────────────────────────────────────────
     useEffect(() => {
         const fetchEpisode = async () => {
             setLoading(true);
@@ -144,7 +149,13 @@ const VideoPlayer = () => {
                 if (!res.ok) throw new Error(`Server error: ${res.status}`);
                 const data = await res.json();
                 const ep = (Array.isArray(data) ? data : []).find(e => String(e.id) === String(id));
-                if (ep) setEpisode(ep);
+                if (ep) {
+                    setEpisode(ep);
+                    if (ep.audio_url) {
+                        setAudioUrl(ep.audio_url);
+                        setAudioReady(true);
+                    }
+                }
                 else setError('Episode not found.');
             } catch (err) {
                 setError('Could not load episode. Is the backend running?');
@@ -155,11 +166,79 @@ const VideoPlayer = () => {
         fetchEpisode();
     }, [id]);
 
-    // ── TTS: Load available voices ──────────────────────────────────────────
+    // ── Poll for audio readiness if not ready yet ────────────────────────────
+    useEffect(() => {
+        if (audioReady || !episode) return;
+        const interval = setInterval(async () => {
+            try {
+                const res = await fetch(`/api/audio/${id}/status`);
+                const data = await res.json();
+                if (data.status === 'ready' && data.audio_url) {
+                    setAudioUrl(data.audio_url);
+                    setAudioReady(true);
+                    clearInterval(interval);
+                }
+            } catch (e) { /* keep polling */ }
+        }, 3000);
+        return () => clearInterval(interval);
+    }, [audioReady, episode, id]);
+
+    // ── HTML5 Audio event handlers ───────────────────────────────────────────
+    useEffect(() => {
+        const audio = audioRef.current;
+        if (!audio || !audioUrl) return;
+
+        audio.src = audioUrl;
+        audio.volume = isMuted ? 0 : volume / 100;
+
+        const onLoadedMetadata = () => {
+            setAudioDuration(audio.duration || 0);
+        };
+        const onTimeUpdate = () => {
+            if (audio.duration) {
+                setProgress((audio.currentTime / audio.duration) * 100);
+                setCurrentTime(Math.floor(audio.currentTime));
+            }
+        };
+        const onEnded = () => {
+            setIsPlaying(false);
+            setProgress(100);
+        };
+
+        audio.addEventListener('loadedmetadata', onLoadedMetadata);
+        audio.addEventListener('timeupdate', onTimeUpdate);
+        audio.addEventListener('ended', onEnded);
+
+        return () => {
+            audio.removeEventListener('loadedmetadata', onLoadedMetadata);
+            audio.removeEventListener('timeupdate', onTimeUpdate);
+            audio.removeEventListener('ended', onEnded);
+        };
+    }, [audioUrl]);
+
+    // ── Sync volume/mute to audio element ────────────────────────────────────
+    useEffect(() => {
+        if (audioRef.current) {
+            audioRef.current.volume = isMuted ? 0 : volume / 100;
+        }
+    }, [volume, isMuted]);
+
+    // ── Play / Pause ────────────────────────────────────────────────────────
+    useEffect(() => {
+        const audio = audioRef.current;
+        if (!audio || !audioReady) return;
+        if (isPlaying) {
+            audio.play().catch(() => {});
+        } else {
+            audio.pause();
+        }
+    }, [isPlaying, audioReady]);
+
+    // ── TTS Fallback (browser SpeechSynthesis) if no MP3 yet ────────────────
     const [ttsVoice, setTtsVoice] = useState(null);
-    const ttsQueueRef = useRef([]);     // queue of utterance texts
-    const ttsIndexRef = useRef(0);      // current position in the queue
-    const ttsActiveRef = useRef(false); // whether we are in a play session
+    const ttsQueueRef = useRef([]);
+    const ttsIndexRef = useRef(0);
+    const ttsActiveRef = useRef(false);
 
     useEffect(() => {
         const synth = window.speechSynthesis;
@@ -178,12 +257,9 @@ const VideoPlayer = () => {
         return () => synth.removeEventListener('voiceschanged', pickVoice);
     }, []);
 
-    // ── TTS: Split script into speakable chunks ──────────────────────────────
     const buildTtsQueue = (text) => {
         if (!text) return [];
-        // Split on sentence-ending punctuation followed by whitespace
         const sentences = text.match(/[^.!?]+[.!?]+[\s]*/g) || [text];
-        // Group sentences into chunks of ~300 chars so the queue isn't too long
         const chunks = [];
         let current = '';
         for (const s of sentences) {
@@ -198,51 +274,40 @@ const VideoPlayer = () => {
         return chunks;
     };
 
-    // ── TTS: Speak the next chunk in the queue ───────────────────────────────
     const speakNext = () => {
         const synth = window.speechSynthesis;
         if (!ttsActiveRef.current) return;
         if (ttsIndexRef.current >= ttsQueueRef.current.length) {
-            // finished all chunks
             ttsActiveRef.current = false;
             setIsPlaying(false);
             setProgress(100);
             return;
         }
-
         const text = ttsQueueRef.current[ttsIndexRef.current];
         const utt = new SpeechSynthesisUtterance(text);
         utt.rate = 1;
         utt.pitch = 1;
         utt.volume = isMuted ? 0 : volume / 100;
         if (ttsVoice) utt.voice = ttsVoice;
-
-        utt.onend = () => {
-            ttsIndexRef.current += 1;
-            speakNext();
-        };
+        utt.onend = () => { ttsIndexRef.current += 1; speakNext(); };
         utt.onerror = (e) => {
             if (e.error !== 'interrupted' && e.error !== 'canceled') {
-                console.warn('TTS error:', e.error);
                 ttsIndexRef.current += 1;
                 speakNext();
             }
         };
-
         utteranceRef.current = utt;
         synth.speak(utt);
     };
 
-    // ── TTS: Play / Pause / Resume ───────────────────────────────────────────
+    // TTS fallback play/pause (only when no audio file)
     useEffect(() => {
-        if (!episode?.script) return;
+        if (audioReady || !episode?.script) return;
         const synth = window.speechSynthesis;
-
         if (isPlaying) {
             if (synth.paused) {
                 synth.resume();
             } else if (!synth.speaking) {
-                // Start fresh
                 synth.cancel();
                 ttsQueueRef.current = buildTtsQueue(episode.script);
                 ttsIndexRef.current = 0;
@@ -250,13 +315,10 @@ const VideoPlayer = () => {
                 speakNext();
             }
         } else {
-            if (synth.speaking && !synth.paused) {
-                synth.pause();
-            }
+            if (synth.speaking && !synth.paused) synth.pause();
         }
-    }, [isPlaying]);
+    }, [isPlaying, audioReady]);
 
-    // ── TTS: cleanup on unmount ──────────────────────────────────────────────
     useEffect(() => {
         return () => {
             ttsActiveRef.current = false;
@@ -264,18 +326,19 @@ const VideoPlayer = () => {
         };
     }, []);
 
-    // ── Fake progress timer while playing ─────────────────────────────────
+    // Fake progress for TTS fallback
     useEffect(() => {
         let interval;
-        if (isPlaying && episode) {
+        if (isPlaying && !audioReady && episode) {
             interval = setInterval(() => {
                 setProgress(prev => (prev >= 100 ? 100 : prev + 0.1));
                 setCurrentTime(prev => prev + 1);
             }, 1000);
         }
         return () => clearInterval(interval);
-    }, [isPlaying, episode]);
+    }, [isPlaying, audioReady, episode]);
 
+    // Chat scroll
     useEffect(() => {
         chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [chatMessages]);
@@ -346,7 +409,9 @@ const VideoPlayer = () => {
         return `${mins}:${secs.toString().padStart(2, '0')}`;
     };
 
-    const totalDuration = episode ? (parseInt(episode.duration) || 5) * 60 : 300;
+    const totalDuration = audioReady && audioDuration > 0 
+        ? Math.floor(audioDuration) 
+        : episode ? (parseInt(episode.duration) || 5) * 60 : 300;
 
     const toggleFullscreen = () => {
         if (!playerRef.current) return;
@@ -443,6 +508,29 @@ const VideoPlayer = () => {
                                 
                                 {/* Animated Visual Content */}
                                 <div className="absolute inset-0 flex flex-col items-center justify-center gap-8">
+                                    {/* Hidden audio element for real MP3 playback */}
+                                    <audio ref={audioRef} preload="auto" />
+                                    
+                                    {/* Audio status indicator */}
+                                    {!audioReady && episode && (
+                                        <motion.div
+                                            initial={{ opacity: 0 }}
+                                            animate={{ opacity: 1 }}
+                                            className="absolute top-6 left-1/2 -translate-x-1/2 bg-amber-500/20 border border-amber-500/30 text-amber-300 text-[10px] font-black uppercase tracking-widest px-4 py-2 rounded-full backdrop-blur-sm z-10"
+                                        >
+                                            🎙️ Generating MP3 Audio...
+                                        </motion.div>
+                                    )}
+                                    {audioReady && (
+                                        <motion.div
+                                            initial={{ opacity: 0 }}
+                                            animate={{ opacity: 1 }}
+                                            className="absolute top-6 left-1/2 -translate-x-1/2 bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 text-[10px] font-black uppercase tracking-widest px-4 py-2 rounded-full backdrop-blur-sm z-10"
+                                        >
+                                            ✅ HD Audio Ready
+                                        </motion.div>
+                                    )}
+
                                     <motion.div 
                                         animate={isPlaying ? { 
                                             scale: [1, 1.05, 1],
@@ -483,7 +571,12 @@ const VideoPlayer = () => {
                                                 const rect = e.currentTarget.getBoundingClientRect();
                                                 const pct = ((e.clientX - rect.left) / rect.width) * 100;
                                                 setProgress(pct);
-                                                setCurrentTime(Math.floor((pct/100) * totalDuration));
+                                                const newTime = Math.floor((pct / 100) * totalDuration);
+                                                setCurrentTime(newTime);
+                                                // Seek in real audio if available
+                                                if (audioRef.current && audioReady) {
+                                                    audioRef.current.currentTime = newTime;
+                                                }
                                             }}
                                         >
                                             <motion.div 
@@ -499,7 +592,14 @@ const VideoPlayer = () => {
 
                                     <div className="flex items-center justify-between">
                                         <div className="flex items-center gap-6">
-                                            <button onClick={() => { setProgress(Math.max(0, progress-5)); setCurrentTime(Math.max(0, currentTime-10)); }} className="text-white/50 hover:text-white transition-colors">
+                                            <button onClick={() => {
+                                                if (audioRef.current && audioReady) {
+                                                    audioRef.current.currentTime = Math.max(0, audioRef.current.currentTime - 10);
+                                                } else {
+                                                    setProgress(Math.max(0, progress-5));
+                                                    setCurrentTime(Math.max(0, currentTime-10));
+                                                }
+                                            }} className="text-white/50 hover:text-white transition-colors">
                                                 <SkipBack size={24} />
                                             </button>
                                             <motion.button 
@@ -510,7 +610,14 @@ const VideoPlayer = () => {
                                             >
                                                 {isPlaying ? <Pause size={28} fill="currentColor" /> : <Play size={28} fill="currentColor" className="ml-1" />}
                                             </motion.button>
-                                            <button onClick={() => { setProgress(Math.min(100, progress+5)); setCurrentTime(Math.min(totalDuration, currentTime+10)); }} className="text-white/50 hover:text-white transition-colors">
+                                            <button onClick={() => {
+                                                if (audioRef.current && audioReady) {
+                                                    audioRef.current.currentTime = Math.min(audioRef.current.duration || totalDuration, audioRef.current.currentTime + 10);
+                                                } else {
+                                                    setProgress(Math.min(100, progress+5));
+                                                    setCurrentTime(Math.min(totalDuration, currentTime+10));
+                                                }
+                                            }} className="text-white/50 hover:text-white transition-colors">
                                                 <SkipForward size={24} />
                                             </button>
                                         </div>

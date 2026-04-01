@@ -14,7 +14,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from database import close_db, connect_db
-from routers import auth, chat, episodes, podcast
+from routers import auth, audio, chat, episodes, podcast
 
 
 @asynccontextmanager
@@ -54,6 +54,7 @@ app.include_router(auth.router)
 app.include_router(episodes.router)
 app.include_router(podcast.router)
 app.include_router(chat.router)
+app.include_router(audio.router)
 
 
 @app.get("/", tags=["Health"])
