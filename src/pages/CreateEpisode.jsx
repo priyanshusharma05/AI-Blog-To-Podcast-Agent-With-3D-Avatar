@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     LayoutDashboard, PlusCircle, AudioLines, Settings, LogOut,
@@ -108,10 +108,11 @@ const CreateEpisode = () => {
     const navigate = useNavigate();
     const [activeNav, setActiveNav] = useState('create');
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-    const [inputMode, setInputMode] = useState('url'); // 'url' | 'text'
+    const [inputMode, setInputMode] = useState('url'); // 'url' | 'text' | 'file'
     const [title, setTitle] = useState('');
     const [blogUrl, setBlogUrl] = useState('');
     const [pasteText, setPasteText] = useState('');
+    const [sourceFile, setSourceFile] = useState(null);
     const [status, setStatus] = useState('idle'); // 'idle' | 'generating' | 'done' | 'error'
     const [generatedScript, setGeneratedScript] = useState('');
     const [apiError, setApiError] = useState('');
@@ -153,7 +154,25 @@ const CreateEpisode = () => {
         .toUpperCase()
         .slice(0, 2);
 
-    const canGenerate = inputMode === 'url' ? blogUrl.trim() !== '' : pasteText.trim() !== '';
+    const canGenerate =
+        inputMode === 'url'
+            ? blogUrl.trim() !== ''
+            : inputMode === 'text'
+                ? pasteText.trim() !== ''
+                : Boolean(sourceFile);
+
+    const sourceSummary = useMemo(() => {
+        if (inputMode === 'url') return blogUrl.trim() || 'Waiting for a public blog URL';
+        if (inputMode === 'text') return `${pasteText.trim().length} characters prepared`;
+        return sourceFile ? `${sourceFile.name} ready for upload` : 'Waiting for a .txt file';
+    }, [blogUrl, inputMode, pasteText, sourceFile]);
+
+    const pipelineSteps =
+        status === 'generating'
+            ? ['Source locked', 'Cleaning content', 'Writing script', 'Preparing audio']
+            : status === 'done'
+                ? ['Source locked', 'Script created', 'Episode saved', 'Audio running']
+                : ['Pick source', 'Shape tone', 'Generate script', 'Publish episode'];
 
     const handleGenerate = async (e) => {
         e.preventDefault();
@@ -162,22 +181,35 @@ const CreateEpisode = () => {
         setApiError('');
         setGeneratedScript('');
 
-        const payload = {
-            title: title.trim() || undefined,
-            voice_tone: selectedTone,
-        };
-        if (inputMode === 'url') {
-            payload.url = blogUrl.trim();
-        } else {
-            payload.text = pasteText.trim();
-        }
-
         try {
-            const res = await fetch('/api/podcast/generate', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload),
-            });
+            let res;
+            if (inputMode === 'file') {
+                const formData = new FormData();
+                if (title.trim()) formData.append('title', title.trim());
+                formData.append('voice_tone', selectedTone);
+                formData.append('source_file', sourceFile);
+
+                res = await fetch('/api/podcast/generate', {
+                    method: 'POST',
+                    body: formData,
+                });
+            } else {
+                const payload = {
+                    title: title.trim() || undefined,
+                    voice_tone: selectedTone,
+                };
+                if (inputMode === 'url') {
+                    payload.url = blogUrl.trim();
+                } else {
+                    payload.text = pasteText.trim();
+                }
+
+                res = await fetch('/api/podcast/generate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload),
+                });
+            }
             const data = await res.json();
 
             if (!res.ok) {
@@ -329,7 +361,39 @@ const CreateEpisode = () => {
                 </header>
 
                 {/* Body */}
-                <div className="flex-1 px-6 md:px-10 py-10 max-w-6xl w-full">
+                <div className="flex-1 px-6 md:px-10 py-10 max-w-7xl w-full">
+                    <motion.div
+                        initial={{ opacity: 0, y: 14 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.4 }}
+                        className="mb-8 overflow-hidden rounded-[30px] border border-slate-200/70 bg-gradient-to-br from-[#0f172a] via-[#132338] to-[#0D9488] p-6 text-white shadow-[0_30px_80px_-45px_rgba(15,23,42,0.7)]"
+                    >
+                        <div className="grid gap-5 lg:grid-cols-[1.15fr_0.85fr]">
+                            <div>
+                                <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.18em] text-teal-100">
+                                    <Sparkles size={12} />
+                                    Episode Studio
+                                </div>
+                                <h2 className="mt-4 text-2xl md:text-3xl font-black tracking-tight">
+                                    Turn any source into a guided podcast workflow.
+                                </h2>
+                                <p className="mt-3 max-w-xl text-sm font-medium leading-6 text-slate-200">
+                                    Choose the source format, set the delivery tone, and send everything through one clean generation pipeline.
+                                </p>
+                            </div>
+
+                            <div className="grid gap-3 sm:grid-cols-2">
+                                <div className="rounded-2xl border border-white/10 bg-white/10 px-4 py-4 backdrop-blur">
+                                    <p className="text-[10px] font-black uppercase tracking-[0.18em] text-teal-100/80">Current source</p>
+                                    <p className="mt-2 text-sm font-bold text-white">{sourceSummary}</p>
+                                </div>
+                                <div className="rounded-2xl border border-white/10 bg-white/10 px-4 py-4 backdrop-blur">
+                                    <p className="text-[10px] font-black uppercase tracking-[0.18em] text-teal-100/80">Selected tone</p>
+                                    <p className="mt-2 text-sm font-bold text-white">{selectedTone}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </motion.div>
                     <div className="flex flex-col xl:flex-row gap-10 items-start">
 
                         {/* ── Form ── */}
@@ -364,7 +428,7 @@ const CreateEpisode = () => {
                                     </div>
 
                                     {/* Mode tabs */}
-                                    <div className="inline-flex bg-slate-100 dark:bg-slate-800 rounded-xl p-1 gap-1">
+                                    <div className="inline-flex bg-slate-100 dark:bg-slate-800 rounded-xl p-1 gap-1 flex-wrap">
                                         <button
                                             type="button"
                                             onClick={() => setInputMode('url')}
@@ -384,6 +448,16 @@ const CreateEpisode = () => {
                                                 }`}
                                         >
                                             <FileText size={14} /> Write
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setInputMode('file')}
+                                            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all ${inputMode === 'file'
+                                                ? 'bg-[#0D9488] text-white shadow-md'
+                                                : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
+                                                }`}
+                                        >
+                                            <FileText size={14} /> Upload TXT
                                         </button>
                                     </div>
 
@@ -411,7 +485,7 @@ const CreateEpisode = () => {
                                                 </div>
                                                 <p className="text-xs text-slate-400 dark:text-slate-500 font-medium mt-2 ml-1">Paste a public blog URL and we'll fetch the content automatically.</p>
                                             </motion.div>
-                                        ) : (
+                                        ) : inputMode === 'text' ? (
                                             <motion.div
                                                 key="text"
                                                 initial={{ opacity: 0, y: 6 }}
@@ -427,6 +501,39 @@ const CreateEpisode = () => {
                                                     className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3.5 text-sm text-slate-800 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-600 focus:outline-none focus:border-[#0D9488]/50 focus:ring-4 focus:ring-teal-500/10 transition-all resize-none"
                                                 />
                                                 <p className="text-xs text-slate-400 dark:text-slate-500 font-medium mt-2 ml-1">{pasteText.length} characters · Recommended: 500–5000 characters</p>
+                                            </motion.div>
+                                        ) : (
+                                            <motion.div
+                                                key="file"
+                                                initial={{ opacity: 0, y: 6 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                                exit={{ opacity: 0, y: -6 }}
+                                                transition={{ duration: 0.2 }}
+                                                className="space-y-3"
+                                            >
+                                                <label className="flex flex-col items-center justify-center gap-3 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-2xl bg-slate-50 dark:bg-slate-800/60 px-6 py-8 text-center cursor-pointer hover:border-[#0D9488]/40 hover:bg-teal-50/40 dark:hover:bg-teal-500/5 transition-all">
+                                                    <FileText size={26} className="text-[#0D9488]" />
+                                                    <div>
+                                                        <p className="text-sm font-black text-slate-700 dark:text-slate-200">
+                                                            {sourceFile ? sourceFile.name : 'Choose a .txt file'}
+                                                        </p>
+                                                        <p className="text-xs text-slate-400 dark:text-slate-500 font-medium mt-1">
+                                                            Upload UTF-8 plain text content for script generation.
+                                                        </p>
+                                                    </div>
+                                                    <input
+                                                        type="file"
+                                                        accept=".txt,text/plain"
+                                                        className="hidden"
+                                                        onChange={(e) => {
+                                                            const file = e.target.files?.[0] || null;
+                                                            setSourceFile(file);
+                                                        }}
+                                                    />
+                                                </label>
+                                                <p className="text-xs text-slate-400 dark:text-slate-500 font-medium mt-2 ml-1">
+                                                    Supported format: `.txt` only.
+                                                </p>
                                             </motion.div>
                                         )}
                                     </AnimatePresence>
@@ -541,16 +648,49 @@ const CreateEpisode = () => {
                             initial={{ opacity: 0, x: 16 }}
                             animate={{ opacity: 1, x: 0 }}
                             transition={{ duration: 0.5, delay: 0.15 }}
-                            className="xl:w-72 w-full"
+                            className="xl:w-[22rem] w-full"
                         >
-                            <div className="bg-white dark:bg-slate-900 rounded-[24px] border border-slate-100 dark:border-slate-800 shadow-sm p-8 flex flex-col items-center gap-6 sticky top-24">
+                            <div className="bg-white dark:bg-slate-900 rounded-[24px] border border-slate-100 dark:border-slate-800 shadow-sm p-8 flex flex-col gap-6 sticky top-24">
                                 <AIAvatar status={status} />
 
-                                {/* Tips */}
-                                <div className="w-full space-y-2.5 pt-4 border-t border-slate-100 dark:border-slate-800">
+                                <div className="rounded-[22px] border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 p-4">
+                                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-4">Pipeline Board</p>
+                                    <div className="space-y-3">
+                                        {pipelineSteps.map((step, index) => (
+                                            <div key={step} className="flex items-start gap-3">
+                                                <div className={`w-7 h-7 rounded-xl flex items-center justify-center text-[10px] font-black ${
+                                                    status === 'done' || (status === 'generating' && index === 0)
+                                                        ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400'
+                                                        : status === 'generating' && index < 3
+                                                            ? 'bg-teal-50 text-[#0D9488] dark:bg-teal-500/10'
+                                                            : 'bg-slate-200 text-slate-500 dark:bg-slate-700 dark:text-slate-300'
+                                                }`}>
+                                                    {status === 'done' || (status === 'generating' && index === 0) ? 'OK' : index + 1}
+                                                </div>
+                                                <div className="flex-1 pt-1">
+                                                    <p className="text-xs font-bold text-slate-700 dark:text-slate-200">{step}</p>
+                                                    <div className="mt-2 h-1.5 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">
+                                                        <div className={`h-full rounded-full ${
+                                                            status === 'done'
+                                                                ? 'w-full bg-emerald-500'
+                                                                : status === 'generating' && index < 2
+                                                                    ? 'w-4/5 bg-[#0D9488]'
+                                                                    : status === 'generating' && index === 2
+                                                                        ? 'w-3/5 bg-teal-400'
+                                                                        : 'w-1/4 bg-slate-300 dark:bg-slate-600'
+                                                        }`} />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                <div className="w-full space-y-2.5 pt-1">
                                     <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3">Tips</p>
                                     {[
                                         'Use a publicly accessible blog URL.',
+                                        'You can also upload a UTF-8 .txt file.',
                                         'Longer content = richer podcast script.',
                                         '"Conversational" tone works best for most blogs.',
                                     ].map((tip, i) => (

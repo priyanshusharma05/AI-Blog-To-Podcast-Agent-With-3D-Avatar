@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     LayoutDashboard, PlusCircle, AudioLines, Settings, LogOut,
@@ -143,6 +143,16 @@ const Analytics = () => {
     const user = getUserSafely();
     const initials = (user.name || 'Guest').split(' ').map(w => w ? w[0] : '').join('').toUpperCase().slice(0, 2);
 
+    const overviewTiles = useMemo(() => {
+        const topViews = topEpisodes[0]?.views || 0;
+        return [
+            { label: 'Episodes tracked', value: stats.created, sub: 'catalog size in analytics' },
+            { label: 'Top episode reach', value: topViews, sub: 'best-performing episode views' },
+            { label: 'Avg views', value: stats.created ? Math.round(stats.watched / stats.created) : 0, sub: 'plays per episode on average' },
+            { label: 'Growth signal', value: stats.recentGrowth.replace(' growth', ''), sub: 'current library momentum' },
+        ];
+    }, [stats, topEpisodes]);
+
     return (
         <div className="min-h-screen bg-[#F8FAFB] dark:bg-slate-950 flex font-sans transition-colors duration-300 overflow-x-hidden">
 
@@ -189,6 +199,37 @@ const Analytics = () => {
                 </header>
 
                 <div className="p-6 md:p-10 space-y-10">
+                    <motion.div
+                        initial={{ opacity: 0, y: 14 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="overflow-hidden rounded-[32px] border border-slate-200/60 bg-gradient-to-br from-[#0f172a] via-[#132338] to-[#0D9488] p-6 text-white shadow-[0_35px_90px_-50px_rgba(15,23,42,0.85)]"
+                    >
+                        <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
+                            <div>
+                                <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.18em] text-teal-100">
+                                    <TrendingUp size={12} />
+                                    Analytics control room
+                                </div>
+                                <h2 className="mt-4 text-2xl md:text-3xl font-black tracking-tight">
+                                    Read performance, spot momentum, and double down on what listeners actually play.
+                                </h2>
+                                <p className="mt-3 max-w-xl text-sm font-medium leading-6 text-slate-200">
+                                    This panel pulls from your episode library to highlight current reach, stronger content signals, and where your catalog is trending.
+                                </p>
+                            </div>
+
+                            <div className="grid gap-3 sm:grid-cols-2">
+                                {overviewTiles.map((tile) => (
+                                    <div key={tile.label} className="rounded-[22px] border border-white/10 bg-white/10 p-4 backdrop-blur">
+                                        <p className="text-[10px] font-black uppercase tracking-[0.18em] text-teal-100/80">{tile.label}</p>
+                                        <p className="mt-2 text-3xl font-black text-white">{tile.value}</p>
+                                        <p className="mt-2 text-xs font-medium text-slate-200">{tile.sub}</p>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </motion.div>
+
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                         <StatCard label="Total Episodes" value={stats.created} trend={stats.recentGrowth} icon={AudioLines} color="teal" />
                         <StatCard label="Total Plays" value={stats.watched} trend="+2.4% vs last week" icon={Play} color="violet" />

@@ -1,5 +1,5 @@
 """
-services/ai.py — Gemini 2.5 Flash API wrapper (single key).
+services/ai.py - Gemini API wrapper with retry and model fallback support.
 """
 
 from __future__ import annotations
@@ -10,67 +10,118 @@ import time
 import requests
 from dotenv import load_dotenv
 
-GEMINI_MODEL = "gemini-2.5-flash"
+DEFAULT_PRIMARY_MODEL = "gemini-2.5-flash"
+DEFAULT_FALLBACK_MODEL = "gemini-1.5-flash"
+RETRYABLE_STATUS_CODES = {429, 500, 503}
+
+
+def _candidate_models() -> list[str]:
+    """Return the ordered model list, removing duplicates and blanks."""
+    primary = os.getenv("GEMINI_MODEL", DEFAULT_PRIMARY_MODEL).strip()
+    fallback = os.getenv("GEMINI_FALLBACK_MODEL", DEFAULT_FALLBACK_MODEL).strip()
+
+    candidates: list[str] = []
+    for model in (primary, fallback):
+        if model and model not in candidates:
+            candidates.append(model)
+    return candidates
+
+
+def _extract_text(data: dict) -> str:
+    """Extract generated text from a Gemini API response payload."""
+    candidates = data.get("candidates", [])
+    parts = candidates[0].get("content", {}).get("parts", []) if candidates else []
+    return "".join(part.get("text", "") for part in parts).strip()
 
 
 def call_gemini(prompt: str) -> str:
-    """Send a prompt to Gemini and return the generated text."""
+    """Send a prompt to Gemini and return generated text with fallback support."""
     load_dotenv(override=True)
     api_key = os.getenv("GEMINI_API_KEY", "").strip()
     if not api_key:
         raise RuntimeError("GEMINI_API_KEY is not set. Add it to backend/.env")
 
-    endpoint = (
-        f"https://generativelanguage.googleapis.com/v1beta/models/"
-        f"{GEMINI_MODEL}:generateContent?key={api_key}"
-    )
-    payload = {
-        "contents": [{"parts": [{"text": prompt}]}]
-    }
-
+    payload = {"contents": [{"parts": [{"text": prompt}]}]}
     max_retries = 3
     base_delay = 5
+    last_error = "Gemini API request failed."
 
-    for attempt in range(max_retries):
-        try:
-            print(f"🔑 Calling Gemini ({GEMINI_MODEL}), attempt {attempt + 1}/{max_retries}...")
-            resp = requests.post(
-                endpoint,
-                headers={"Content-Type": "application/json"},
-                json=payload,
-                timeout=90,
-            )
-            print(f"📡 Response status: {resp.status_code}")
+    for model_name in _candidate_models():
+        endpoint = (
+            f"https://generativelanguage.googleapis.com/v1beta/models/"
+            f"{model_name}:generateContent?key={api_key}"
+        )
 
-            if resp.status_code == 429:
-                print(f"⏳ Rate limited (429). Waiting before retry...")
-                time.sleep(base_delay * (2 ** attempt))
-                continue
+        for attempt in range(max_retries):
+            try:
+                print(
+                    f"Calling Gemini ({model_name}), "
+                    f"attempt {attempt + 1}/{max_retries}..."
+                )
+                resp = requests.post(
+                    endpoint,
+                    headers={"Content-Type": "application/json"},
+                    json=payload,
+                    timeout=90,
+                )
+                print(f"Response status from {model_name}: {resp.status_code}")
 
-            if resp.status_code != 200:
-                error_body = resp.text[:500]
-                raise RuntimeError(f"Gemini API error (HTTP {resp.status_code}): {error_body}")
+                if resp.status_code in RETRYABLE_STATUS_CODES:
+                    error_body = resp.text[:500]
+                    last_error = (
+                        f"Gemini API error from {model_name} "
+                        f"(HTTP {resp.status_code}): {error_body}"
+                    )
+                    if attempt < max_retries - 1:
+                        wait_seconds = base_delay * (2 ** attempt)
+                        print(
+                            f"Retryable Gemini error from {model_name}. "
+                            f"Waiting {wait_seconds}s before retry..."
+                        )
+                        time.sleep(wait_seconds)
+                        continue
+                    print(f"Switching away from {model_name} after repeated failures.")
+                    break
 
-            data = resp.json()
-            candidates = data.get("candidates", [])
-            parts = (
-                candidates[0].get("content", {}).get("parts", [])
-                if candidates
-                else []
-            )
-            text = "".join(p.get("text", "") for p in parts).strip()
-            if not text:
-                print(f"⚠️  Empty response from Gemini. Raw: {str(data)[:300]}")
-            return text
+                if resp.status_code != 200:
+                    error_body = resp.text[:500]
+                    raise RuntimeError(
+                        f"Gemini API error from {model_name} "
+                        f"(HTTP {resp.status_code}): {error_body}"
+                    )
 
-        except requests.RequestException as exc:
-            if attempt == max_retries - 1:
-                raise RuntimeError(f"Gemini API request failed: {exc}") from exc
-            else:
-                print(f"⏳ Request Exception: {exc}. Retrying...")
-                time.sleep(base_delay * (2 ** attempt))
+                data = resp.json()
+                text = _extract_text(data)
+                if text:
+                    return text
 
-    raise RuntimeError("Gemini API failed after all retries due to rate limiting.")
+                last_error = (
+                    f"Gemini returned an empty response for model {model_name}. "
+                    f"Raw payload: {str(data)[:300]}"
+                )
+                if attempt < max_retries - 1:
+                    wait_seconds = base_delay * (2 ** attempt)
+                    print(
+                        f"Empty Gemini response from {model_name}. "
+                        f"Waiting {wait_seconds}s before retry..."
+                    )
+                    time.sleep(wait_seconds)
+                    continue
+                break
+
+            except requests.RequestException as exc:
+                last_error = f"Gemini API request failed for {model_name}: {exc}"
+                if attempt == max_retries - 1:
+                    print(f"Switching away from {model_name} after request failures.")
+                    break
+                wait_seconds = base_delay * (2 ** attempt)
+                print(
+                    f"Gemini request exception for {model_name}: {exc}. "
+                    f"Waiting {wait_seconds}s before retry..."
+                )
+                time.sleep(wait_seconds)
+
+    raise RuntimeError(last_error)
 
 
 def generate_script_from_chunks(
@@ -81,9 +132,9 @@ def generate_script_from_chunks(
     Each chunk is processed sequentially with context from previous parts.
     """
     tone_guidance = {
-        "Conversational": "warm, friendly, and engaging — as if speaking directly to a friend",
-        "Professional": "formal, authoritative, and clear — suitable for a business audience",
-        "Energetic": "lively, upbeat, and enthusiastic — keeping listeners excited",
+        "Conversational": "warm, friendly, and engaging - as if speaking directly to a friend",
+        "Professional": "formal, authoritative, and clear - suitable for a business audience",
+        "Energetic": "lively, upbeat, and enthusiastic - keeping listeners excited",
     }.get(voice_tone, "warm and engaging")
 
     generated_parts: list[str] = []
@@ -95,7 +146,7 @@ def generate_script_from_chunks(
             f"Tone: {tone_guidance}.\n"
             "Continue the narration naturally from the previous script.\n"
             "Do not repeat information already covered.\n"
-            "Only output the next narration segment — no meta-commentary.\n\n"
+            "Only output the next narration segment - no meta-commentary.\n\n"
             f"Previous Script:\n{previous_script or '[None yet]'}\n\n"
             f"Blog Section {index}:\n{chunk}"
         )

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     LayoutDashboard, PlusCircle, AudioLines, Settings, LogOut,
@@ -235,6 +235,32 @@ const MyEpisodes = () => {
         return matchesFilter && matchesSearch;
     });
 
+    const overviewStats = useMemo(() => {
+        const allEpisodes = episodes || [];
+        return [
+            {
+                label: 'Library size',
+                value: allEpisodes.length,
+                sub: 'episodes in your workspace',
+            },
+            {
+                label: 'Ready now',
+                value: allEpisodes.filter((ep) => ep.status === 'ready').length,
+                sub: 'available for playback',
+            },
+            {
+                label: 'In progress',
+                value: allEpisodes.filter((ep) => ep.status === 'generating').length,
+                sub: 'still rendering',
+            },
+            {
+                label: 'Filtered view',
+                value: filteredEpisodes.length,
+                sub: search ? 'matching your search' : `showing ${filter.toLowerCase()}`,
+            },
+        ];
+    }, [episodes, filteredEpisodes.length, filter, search]);
+
     return (
         <div className="min-h-screen bg-[#F8FAFB] dark:bg-slate-950 flex font-sans transition-colors duration-300 overflow-x-hidden">
 
@@ -375,8 +401,41 @@ const MyEpisodes = () => {
                     </div>
                 </header>
 
+                <div className="px-6 md:px-10 pt-8">
+                    <motion.div
+                        initial={{ opacity: 0, y: 14 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="mb-8 overflow-hidden rounded-[32px] border border-slate-200/60 bg-gradient-to-br from-[#0f172a] via-[#132338] to-[#0D9488] p-6 text-white shadow-[0_35px_90px_-50px_rgba(15,23,42,0.85)]"
+                    >
+                        <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
+                            <div>
+                                <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.18em] text-teal-100">
+                                    <AudioLines size={12} />
+                                    Episode library
+                                </div>
+                                <h2 className="mt-4 text-2xl md:text-3xl font-black tracking-tight">
+                                    Your episode archive, now easier to scan and manage.
+                                </h2>
+                                <p className="mt-3 max-w-xl text-sm font-medium leading-6 text-slate-200">
+                                    Review what is finished, spot what is still generating, and jump straight into the next playback or edit action.
+                                </p>
+                            </div>
+
+                            <div className="grid gap-3 sm:grid-cols-2">
+                                {overviewStats.map((item) => (
+                                    <div key={item.label} className="rounded-[22px] border border-white/10 bg-white/10 p-4 backdrop-blur">
+                                        <p className="text-[10px] font-black uppercase tracking-[0.18em] text-teal-100/80">{item.label}</p>
+                                        <p className="mt-2 text-3xl font-black text-white">{item.value}</p>
+                                        <p className="mt-2 text-xs font-medium text-slate-200">{item.sub}</p>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </motion.div>
+                </div>
+
                 {/* Filters & Search */}
-                <div className="px-6 md:px-10 pt-8 pb-4">
+                <div className="px-6 md:px-10 pb-4">
                     <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
                         {/* Search */}
                         <div className="relative w-full md:w-96">
@@ -393,7 +452,7 @@ const MyEpisodes = () => {
                         </div>
 
                         {/* Filter Tabs */}
-                        <div className="flex bg-slate-100 dark:bg-slate-900 p-1 rounded-2xl gap-1">
+                        <div className="flex flex-wrap bg-slate-100 dark:bg-slate-900 p-1 rounded-2xl gap-1 shadow-sm">
                             {['All', 'Draft', 'Generating', 'Ready'].map((tab) => (
                                 <button
                                     key={tab}
@@ -464,7 +523,7 @@ const MyEpisodes = () => {
                                         initial={{ opacity: 0, scale: 0.9 }}
                                         animate={{ opacity: 1, scale: 1 }}
                                         exit={{ opacity: 0, scale: 0.9 }}
-                                        className="group relative bg-teal-50/30 dark:bg-slate-900 rounded-[24px] overflow-hidden flex flex-col border border-teal-100/50 dark:border-slate-800 hover:border-teal-500/30 transition-all shadow-xl"
+                                        className="group relative bg-teal-50/30 dark:bg-slate-900 rounded-[24px] overflow-hidden flex flex-col border border-teal-100/50 dark:border-slate-800 hover:border-teal-500/30 transition-all shadow-xl hover:-translate-y-1 hover:shadow-2xl"
                                     >
                                         {/* Visual/Image Area */}
                                         <div 
@@ -481,9 +540,12 @@ const MyEpisodes = () => {
                                                 {[3, 6, 4, 8, 5, 7, 3, 5, 4, 6].map((h, i) => (
                                                     <motion.div
                                                         key={i}
-                                                        animate={{ height: [`${h * 2}px`, `${h * 4}px`, `${h * 2}px`] }}
-                                                        transition={{ duration: 1, repeat: Infinity, delay: i * 0.1 }}
-                                                        className="w-1 bg-teal-500/40 rounded-full"
+                                                        animate={ep.status === 'generating'
+                                                            ? { height: [`${h * 2}px`, `${h * 4}px`, `${h * 2}px`] }
+                                                            : { height: `${h * 3}px` }
+                                                        }
+                                                        transition={{ duration: 1, repeat: ep.status === 'generating' ? Infinity : 0, delay: i * 0.1 }}
+                                                        className={`w-1 rounded-full ${ep.status === 'ready' ? 'bg-teal-500/40' : ep.status === 'generating' ? 'bg-amber-400/60' : 'bg-violet-400/50'}`}
                                                     />
                                                 ))}
                                             </div>
@@ -502,12 +564,12 @@ const MyEpisodes = () => {
                                                 {ep.desc}
                                             </p>
 
-                                            <div className="mt-auto space-y-4">
-                                                {/* Meta */}
-                                                <div className="flex items-center justify-between text-[11px] font-black uppercase tracking-tighter text-slate-500">
-                                                    <div className="flex items-center gap-3">
-                                                        <span className="flex items-center gap-1"><Clock size={12} /> {ep.duration}</span>
-                                                        <span>{ep.date}</span>
+                                                <div className="mt-auto space-y-4">
+                                                    {/* Meta */}
+                                                    <div className="flex items-center justify-between text-[11px] font-black uppercase tracking-tighter text-slate-500">
+                                                        <div className="flex items-center gap-3">
+                                                            <span className="flex items-center gap-1"><Clock size={12} /> {ep.duration}</span>
+                                                            <span>{ep.date}</span>
                                                     </div>
                                                     {(ep.views || 0) > 0 && (
                                                         <span className="flex items-center gap-1"><Headphones size={12} /> {ep.views}</span>
@@ -524,6 +586,34 @@ const MyEpisodes = () => {
                                                             {tag}
                                                         </span>
                                                     ))}
+                                                </div>
+
+                                                <div className="rounded-2xl bg-white/70 dark:bg-slate-800/80 border border-slate-200/70 dark:border-slate-700 px-3 py-3">
+                                                    <div className="flex items-center justify-between mb-2">
+                                                        <p className="text-[10px] font-black uppercase tracking-[0.16em] text-slate-400">Episode pulse</p>
+                                                        <span className="text-[10px] font-black text-[#0D9488] dark:text-teal-400">
+                                                            {ep.status === 'ready' ? 'Playable' : ep.status === 'generating' ? 'Processing' : 'Draft mode'}
+                                                        </span>
+                                                    </div>
+                                                    <div className="flex items-end gap-1 h-7">
+                                                        {[0.35, 0.65, 0.48, 0.82, 0.58, 0.76, 0.4, 0.68].map((bar, index) => (
+                                                            <motion.div
+                                                                key={index}
+                                                                animate={ep.status === 'generating'
+                                                                    ? { height: [`${bar * 35}%`, `${bar * 100}%`, `${bar * 35}%`] }
+                                                                    : { height: `${bar * 100}%` }
+                                                                }
+                                                                transition={{ duration: 1.2 + index * 0.06, repeat: ep.status === 'generating' ? Infinity : 0, ease: 'easeInOut' }}
+                                                                className={`flex-1 rounded-full ${
+                                                                    ep.status === 'ready'
+                                                                        ? 'bg-gradient-to-t from-[#0D9488] to-teal-300'
+                                                                        : ep.status === 'generating'
+                                                                            ? 'bg-gradient-to-t from-amber-500 to-amber-300'
+                                                                            : 'bg-gradient-to-t from-violet-500 to-violet-300'
+                                                                }`}
+                                                            />
+                                                        ))}
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
