@@ -1,8 +1,12 @@
-import React from 'react';
+import React, { useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Play, Sparkles, Video, Zap } from 'lucide-react';
+import demoVideoSrc from '../../../HomeDemo.mp4';
 
 const DemoVideo = () => {
+    const [isPlaying, setIsPlaying] = useState(false);
+    const videoRef = useRef(null);
+
     return (
         <section id="demo-section" className="py-24 bg-[#FDFCFB] relative overflow-hidden">
             <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -49,50 +53,76 @@ const DemoVideo = () => {
                     transition={{ duration: 0.8, delay: 0.2 }}
                     className="relative group mb-24"
                 >
-                    {/* Glow effect behind video */}
                     <div className="absolute -inset-4 bg-gradient-to-r from-teal-500 to-emerald-500 rounded-[48px] opacity-10 blur-2xl group-hover:opacity-20 transition-opacity duration-700" />
 
                     <div className="relative aspect-[21/9] md:aspect-video bg-slate-900 rounded-[32px] md:rounded-[48px] overflow-hidden border border-slate-200/50 shadow-2xl shadow-teal-900/10 group-hover:shadow-teal-900/20 transition-all duration-700">
-                        {/* Static Placeholder for Demo */}
-                        <div className="absolute inset-0 flex flex-col items-center justify-center text-white bg-slate-800/50 backdrop-blur-sm z-10 transition-colors group-hover:bg-slate-800/30">
-                            <motion.div
-                                whileHover={{ scale: 1.1 }}
-                                whileTap={{ scale: 0.9 }}
-                                className="w-20 h-20 md:w-24 md:h-24 bg-teal-500 rounded-full flex items-center justify-center cursor-pointer mb-6 shadow-2xl shadow-teal-500/40"
-                            >
-                                <Play size={36} fill="white" className="ml-2" />
-                            </motion.div>
-                            <h3 className="text-2xl md:text-3xl font-black mb-3 tracking-tight">Click to Play Demo</h3>
-                            <p className="text-teal-400 font-bold uppercase tracking-widest text-xs">Full HD Experience • 2:45 Mins</p>
-                        </div>
+                        <video
+                            ref={videoRef}
+                            className="absolute inset-0 h-full w-full object-cover"
+                            controls={isPlaying}
+                            preload="metadata"
+                            playsInline
+                            onPlay={() => setIsPlaying(true)}
+                            onPause={(event) => {
+                                if (event.currentTarget.ended) {
+                                    setIsPlaying(false);
+                                }
+                            }}
+                            onEnded={() => setIsPlaying(false)}
+                        >
+                            <source src={demoVideoSrc} type="video/mp4" />
+                            Your browser does not support the demo video.
+                        </video>
 
-                        {/* Abstract Background Design for Placeholder */}
-                        <div className="absolute inset-0 opacity-20 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4MCIgaGVpZ2h0PSI4MCI+PHBhdGggZD0iTTAgMGg4MHY4MEgwem00MCA0MGMxMS0xMSAyOS0xMSA0MCAwVjBjLTExIDExLTI5IDExLTQwIDBTMC0xMS0xMS0xMSAwIDB6IiBmaWxsPSIjZmZmZmZmIiBmaWxsLW9wYWNpdHk9IjAuMSIvPjwvc3ZnPg==')] pointer-events-none" />
+                        {!isPlaying && (
+                            <>
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        if (videoRef.current) {
+                                            videoRef.current.play();
+                                        }
+                                        setIsPlaying(true);
+                                    }}
+                                    className="absolute inset-0 flex flex-col items-center justify-center text-white bg-slate-800/50 backdrop-blur-sm z-10 transition-colors group-hover:bg-slate-800/30"
+                                >
+                                    <motion.div
+                                        whileHover={{ scale: 1.1 }}
+                                        whileTap={{ scale: 0.9 }}
+                                        className="w-20 h-20 md:w-24 md:h-24 bg-teal-500 rounded-full flex items-center justify-center cursor-pointer mb-6 shadow-2xl shadow-teal-500/40"
+                                    >
+                                        <Play size={36} fill="white" className="ml-2" />
+                                    </motion.div>
+                                    <h3 className="text-2xl md:text-3xl font-black mb-3 tracking-tight">Click to Play Demo</h3>
+                                    <p className="text-teal-400 font-bold uppercase tracking-widest text-xs">Full HD Experience • 2:45 Mins</p>
+                                </button>
 
-                        {/* Decorative Video Waveform Elements */}
-                        <div className="absolute bottom-6 md:bottom-10 left-6 md:left-10 flex gap-1 z-20">
-                            {[0.4, 0.7, 0.5, 0.9, 0.6, 0.8, 0.3, 0.6].map((h, i) => (
-                                <motion.div
-                                    key={i}
-                                    animate={{ height: [`${h * 100}%`, `${h * 40}%`, `${h * 100}%`] }}
-                                    transition={{ duration: 1.5, repeat: Infinity, delay: i * 0.1, ease: "easeInOut" }}
-                                    className="w-1 md:w-1.5 bg-teal-400 rounded-full opacity-80"
-                                    style={{ height: '32px' }}
-                                />
-                            ))}
-                        </div>
+                                <div className="absolute inset-0 opacity-20 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4MCIgaGVpZ2h0PSI4MCI+PHBhdGggZD0iTTAgMGg4MHY4MEgwem00MCA0MGMxMS0xMSAyOS0xMSA0MCAwVjBjLTExIDExLTI5IDExLTQwIDBTMC0xMS0xMS0xMSAwIDB6IiBmaWxsPSIjZmZmZmZmIiBmaWxsLW9wYWNpdHk9IjAuMSIvPjwvc3ZnPg==')] pointer-events-none" />
 
-                        {/* Video timeline imitation */}
-                        <div className="absolute bottom-0 left-0 right-0 h-1.5 bg-slate-700 z-20">
-                            <motion.div
-                                initial={{ width: "0%" }}
-                                whileInView={{ width: "35%" }}
-                                transition={{ duration: 2, delay: 1 }}
-                                className="h-full bg-teal-500 rounded-r-full relative"
-                            >
-                                <div className="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-3 bg-white rounded-full shadow" />
-                            </motion.div>
-                        </div>
+                                <div className="absolute bottom-6 md:bottom-10 left-6 md:left-10 flex gap-1 z-20">
+                                    {[0.4, 0.7, 0.5, 0.9, 0.6, 0.8, 0.3, 0.6].map((h, i) => (
+                                        <motion.div
+                                            key={i}
+                                            animate={{ height: [`${h * 100}%`, `${h * 40}%`, `${h * 100}%`] }}
+                                            transition={{ duration: 1.5, repeat: Infinity, delay: i * 0.1, ease: "easeInOut" }}
+                                            className="w-1 md:w-1.5 bg-teal-400 rounded-full opacity-80"
+                                            style={{ height: '32px' }}
+                                        />
+                                    ))}
+                                </div>
+
+                                <div className="absolute bottom-0 left-0 right-0 h-1.5 bg-slate-700 z-20">
+                                    <motion.div
+                                        initial={{ width: "0%" }}
+                                        whileInView={{ width: "35%" }}
+                                        transition={{ duration: 2, delay: 1 }}
+                                        className="h-full bg-teal-500 rounded-r-full relative"
+                                    >
+                                        <div className="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-3 bg-white rounded-full shadow" />
+                                    </motion.div>
+                                </div>
+                            </>
+                        )}
                     </div>
                 </motion.div>
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     LayoutDashboard, PlusCircle, AudioLines, Settings, LogOut,
@@ -6,9 +6,10 @@ import {
     Play, Pause, Volume2, VolumeX, Maximize, SkipBack, SkipForward,
     ThumbsUp, ThumbsDown, Share2, Bookmark, MoreHorizontal,
     Send, MessageCircle, Clock, Eye, ArrowLeft, Headphones, 
-    Sparkles, Info, ListMusic
+    Sparkles, Info, FileText
 } from 'lucide-react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
+import { authFetch } from '../utils/authFetch';
 
 /* ─── Sidebar link (shared style) ───────────────── */
 const SideLink = ({ icon: Icon, label, active, onClick }) => (
@@ -80,6 +81,48 @@ const AnimatedWaveform = ({ isPlaying }) => {
     );
 };
 
+const buildCaptionSegments = (script, totalSeconds) => {
+    if (!script) return [];
+
+    const cleanedScript = script
+        .replace(/\r/g, '')
+        .replace(/\n{2,}/g, '\n')
+        .trim();
+
+    const sentenceParts = cleanedScript
+        .split(/(?<=[.!?])\s+|\n+/)
+        .map((part) => part.trim())
+        .filter(Boolean);
+
+    if (!sentenceParts.length) return [];
+
+    const segments = [];
+    let currentSegment = '';
+
+    sentenceParts.forEach((part) => {
+        if ((currentSegment + ' ' + part).trim().length > 140 && currentSegment) {
+            segments.push(currentSegment.trim());
+            currentSegment = part;
+        } else {
+            currentSegment = `${currentSegment} ${part}`.trim();
+        }
+    });
+
+    if (currentSegment) {
+        segments.push(currentSegment.trim());
+    }
+
+    const safeDuration = Math.max(totalSeconds || 0, segments.length * 4, 8);
+    const segmentDuration = safeDuration / segments.length;
+
+    return segments.map((text, index) => ({
+        id: `${index}-${text.slice(0, 12)}`,
+        text,
+        start: Math.floor(index * segmentDuration),
+        end: index === segments.length - 1 ? Math.ceil(safeDuration) : Math.floor((index + 1) * segmentDuration),
+    }));
+};
+
 const VideoPlayer = () => {
     const navigate = useNavigate();
     const { id } = useParams();
@@ -98,6 +141,10 @@ const VideoPlayer = () => {
     const [volume, setVolume] = useState(80);
     const [isMuted, setIsMuted] = useState(false);
     const [currentTime, setCurrentTime] = useState(0);
+    const [captionsEnabled, setCaptionsEnabled] = useState(() => {
+        const stored = localStorage.getItem('vc_captions_enabled');
+        return stored === null ? true : stored === 'true';
+    });
 
     // Episode data
     const [episode, setEpisode] = useState(null);
@@ -114,7 +161,12 @@ const VideoPlayer = () => {
     ]);
     const [chatInput, setChatInput] = useState('');
     const [chatHistory, setChatHistory] = useState([]);
+    const [followUpSuggestions, setFollowUpSuggestions] = useState([]);
     const [isChatLoading, setIsChatLoading] = useState(false);
+    const [summary, setSummary] = useState('');
+    const [summaryVisible, setSummaryVisible] = useState(false);
+    const [summaryLoading, setSummaryLoading] = useState(false);
+    const [summaryError, setSummaryError] = useState('');
 
     useEffect(() => {
         if (isDark) {
@@ -125,6 +177,10 @@ const VideoPlayer = () => {
             localStorage.setItem('vc_theme', 'light');
         }
     }, [isDark]);
+
+    useEffect(() => {
+        localStorage.setItem('vc_captions_enabled', String(captionsEnabled));
+    }, [captionsEnabled]);
 
     const toggleTheme = () => setIsDark(!isDark);
 
@@ -145,10 +201,9 @@ const VideoPlayer = () => {
         const fetchEpisode = async () => {
             setLoading(true);
             try {
-                const res = await fetch('/api/episodes/');
+                const res = await authFetch(`/api/episodes/${id}`);
                 if (!res.ok) throw new Error(`Server error: ${res.status}`);
-                const data = await res.json();
-                const ep = (Array.isArray(data) ? data : []).find(e => String(e.id) === String(id));
+                const ep = await res.json();
                 if (ep) {
                     setEpisode(ep);
                     if (ep.audio_url) {
@@ -359,10 +414,11 @@ const VideoPlayer = () => {
             isOwn: true,
         }]);
         setChatInput('');
+        setFollowUpSuggestions([]);
         setIsChatLoading(true);
 
         try {
-            const res = await fetch('/api/chat/', {
+            const res = await authFetch('/api/chat/', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -378,17 +434,23 @@ const VideoPlayer = () => {
             }
 
             const data = await res.json();
+            const answer = data.answer || data.reply || '';
 
             setChatMessages(prev => [...prev, {
                 id: Date.now() + 1,
                 user: 'AI Narrator',
                 avatar: '🤖',
-                text: data.reply,
+                text: answer,
                 time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
                 isOwn: false,
             }]);
 
-            setChatHistory(data.history || []);
+            setChatHistory(prev => [
+                ...prev,
+                { role: 'user', content: userMsg },
+                { role: 'assistant', content: answer },
+            ]);
+            setFollowUpSuggestions(Array.isArray(data.suggestions) ? data.suggestions : []);
         } catch (err) {
             setChatMessages(prev => [...prev, {
                 id: Date.now() + 1,
@@ -403,6 +465,36 @@ const VideoPlayer = () => {
         }
     };
 
+    const handleSuggestionClick = (suggestion) => {
+        setChatInput(suggestion);
+    };
+
+    const handleViewSummary = async () => {
+        if (!id || summaryLoading) return;
+
+        if (summary) {
+            setSummaryVisible((visible) => !visible);
+            return;
+        }
+
+        setSummaryVisible(true);
+        setSummaryLoading(true);
+        setSummaryError('');
+
+        try {
+            const res = await authFetch(`/api/episodes/${id}/summary`);
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) {
+                throw new Error(data.detail || `Server error: ${res.status}`);
+            }
+            setSummary(data.summary || '');
+        } catch (err) {
+            setSummaryError(err.message || 'Could not load summary.');
+        } finally {
+            setSummaryLoading(false);
+        }
+    };
+
     const formatTime = (seconds) => {
         const mins = Math.floor(seconds / 60);
         const secs = seconds % 60;
@@ -412,6 +504,20 @@ const VideoPlayer = () => {
     const totalDuration = audioReady && audioDuration > 0 
         ? Math.floor(audioDuration) 
         : episode ? (parseInt(episode.duration) || 5) * 60 : 300;
+
+    const captionSegments = useMemo(
+        () => buildCaptionSegments(episode?.script || '', totalDuration),
+        [episode?.script, totalDuration]
+    );
+
+    const activeCaptionIndex = useMemo(() => {
+        if (!captionSegments.length) return -1;
+        return captionSegments.findIndex((segment) => currentTime >= segment.start && currentTime < segment.end);
+    }, [captionSegments, currentTime]);
+
+    const activeCaption = activeCaptionIndex >= 0
+        ? captionSegments[activeCaptionIndex]
+        : captionSegments[0] || null;
 
     const toggleFullscreen = () => {
         if (!playerRef.current) return;
@@ -455,7 +561,7 @@ const VideoPlayer = () => {
                     <SideLink icon={BarChart3} label="Analytics" active={false} onClick={() => navigate('/analytics')} />
                     <div className="mt-auto pt-6 border-t border-slate-100 dark:border-white/5 flex flex-col gap-1.5">
                         <SideLink icon={Settings} label="Settings" active={false} onClick={() => navigate('/settings')} />
-                        <SideLink icon={LogOut} label="Logout" active={false} onClick={() => { localStorage.removeItem('vc_user'); navigate('/'); }} />
+                        <SideLink icon={LogOut} label="Logout" active={false} onClick={() => { localStorage.removeItem('vc_user'); localStorage.removeItem('vc_token'); navigate('/'); }} />
                     </div>
                 </nav>
             </aside>
@@ -562,6 +668,22 @@ const VideoPlayer = () => {
                                     </div>
                                 </div>
 
+                                {captionsEnabled && activeCaption && (
+                                    <div className="pointer-events-none absolute inset-x-0 bottom-28 z-20 flex justify-center px-6">
+                                        <motion.div
+                                            key={activeCaption.id}
+                                            initial={{ opacity: 0, y: 10 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            transition={{ duration: 0.2 }}
+                                            className="max-w-3xl rounded-2xl bg-black/72 px-5 py-3 text-center shadow-[0_10px_30px_rgba(0,0,0,0.35)] backdrop-blur-sm"
+                                        >
+                                            <p className="text-base font-semibold leading-relaxed text-white md:text-lg [text-shadow:0_2px_10px_rgba(0,0,0,0.6)]">
+                                                {activeCaption.text}
+                                            </p>
+                                        </motion.div>
+                                    </div>
+                                )}
+
                                 {/* Modern Controls Overlay */}
                                 <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/95 via-black/40 to-transparent p-8 pt-20 translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300">
                                     {/* Progress Bar */}
@@ -634,6 +756,17 @@ const VideoPlayer = () => {
                                                     className="w-16 accent-[#0D9488] opacity-50 hover:opacity-100 transition-opacity" 
                                                 />
                                             </div>
+                                            <button
+                                                onClick={() => setCaptionsEnabled(!captionsEnabled)}
+                                                className={`min-w-12 h-11 rounded-2xl border px-3 text-xs font-black uppercase tracking-[0.22em] transition-all ${
+                                                    captionsEnabled
+                                                        ? 'border-teal-400/40 bg-teal-500/15 text-teal-200 shadow-[0_0_20px_rgba(45,212,191,0.15)]'
+                                                        : 'border-white/10 bg-white/5 text-white/55'
+                                                }`}
+                                                title={captionsEnabled ? 'Turn captions off' : 'Turn captions on'}
+                                            >
+                                                CC
+                                            </button>
                                             <button onClick={toggleFullscreen} className="text-white/50 hover:text-white transition-colors">
                                                 <Maximize size={20} />
                                             </button>
@@ -647,7 +780,40 @@ const VideoPlayer = () => {
                         <section className="space-y-6">
                             <div className="bg-white dark:bg-[#0D0F11] rounded-[32px] p-8 border border-slate-100 dark:border-white/5 shadow-sm">
                                 <div className="space-y-6">
-                                    <h2 className="text-2xl font-black text-slate-800 dark:text-white tracking-tight">{episode?.title}</h2>
+                                    <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                                        <h2 className="text-2xl font-black text-slate-800 dark:text-white tracking-tight">{episode?.title}</h2>
+                                        <button
+                                            type="button"
+                                            onClick={handleViewSummary}
+                                            disabled={summaryLoading || !episode?.script}
+                                            className="inline-flex items-center justify-center gap-2 rounded-2xl bg-[#0D9488] px-4 py-2.5 text-xs font-black text-white shadow-lg shadow-teal-500/20 transition-all hover:bg-teal-700 disabled:cursor-not-allowed disabled:opacity-50"
+                                        >
+                                            {summaryLoading ? (
+                                                <Sparkles size={14} className="animate-spin" />
+                                            ) : (
+                                                <FileText size={14} />
+                                            )}
+                                            {summary ? (summaryVisible ? 'Hide Summary' : 'View Summary') : 'View Summary'}
+                                        </button>
+                                    </div>
+
+                                    {summaryVisible && (
+                                        <div className="rounded-[24px] border border-teal-100 bg-teal-50/70 p-5 dark:border-teal-500/20 dark:bg-teal-500/10">
+                                            <div className="mb-3 flex items-center gap-2">
+                                                <FileText size={15} className="text-[#0D9488] dark:text-teal-300" />
+                                                <p className="text-xs font-black uppercase tracking-[0.18em] text-[#0D9488] dark:text-teal-300">Episode Summary</p>
+                                            </div>
+                                            {summaryLoading ? (
+                                                <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Generating a concise summary...</p>
+                                            ) : summaryError ? (
+                                                <p className="text-sm font-bold text-red-500">{summaryError}</p>
+                                            ) : (
+                                                <div className="whitespace-pre-wrap text-sm font-medium leading-7 text-slate-600 dark:text-slate-300">
+                                                    {summary}
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
                                     
                                     <div className="pt-6 border-t border-slate-100 dark:border-white/5">
                                         <h4 className="flex items-center gap-2 text-xs font-black text-slate-800 dark:text-white uppercase tracking-widest mb-4">
@@ -723,6 +889,23 @@ const VideoPlayer = () => {
                                     {chatMessages.map(msg => (
                                         <ChatBubble key={msg.id} message={msg} isOwn={msg.isOwn} />
                                     ))}
+                                    {followUpSuggestions.length > 0 && (
+                                        <div className="pt-2">
+                                            <p className="mb-2 text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">Suggested questions</p>
+                                            <div className="flex flex-wrap gap-2">
+                                                {followUpSuggestions.map((suggestion) => (
+                                                    <button
+                                                        key={suggestion}
+                                                        type="button"
+                                                        onClick={() => handleSuggestionClick(suggestion)}
+                                                        className="rounded-full border border-teal-100 bg-teal-50 px-3 py-1.5 text-left text-[11px] font-bold text-[#0D9488] transition-colors hover:bg-[#0D9488] hover:text-white dark:border-teal-500/20 dark:bg-teal-500/10 dark:text-teal-300"
+                                                    >
+                                                        {suggestion}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
                                     <div ref={chatEndRef} />
                                 </div>
 

@@ -37,10 +37,10 @@ const Landing = () => {
                         </h2>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-6 grid-rows-2 gap-6 h-auto md:h-[600px]">
+                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 auto-rows-fr">
 
                         {/* FEATURE 1: AI Script Generation */}
-                        <div className="md:col-span-2 lg:col-span-3 bg-white border border-slate-200 rounded-[40px] p-10 flex flex-col justify-between group hover:shadow-2xl transition-all duration-500 overflow-hidden relative">
+                        <div className="min-h-[240px] bg-white border border-slate-200 rounded-[40px] p-10 flex flex-col justify-between group hover:shadow-2xl transition-all duration-500 overflow-hidden relative">
                             <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:scale-110 transition-transform">
                                 <Layout size={120} />
                             </div>
@@ -54,7 +54,7 @@ const Landing = () => {
                         </div>
 
                         {/* FEATURE 2: Voice Synthesis */}
-                        <div className="md:col-span-2 lg:col-span-3 bg-[#0F172A] rounded-[40px] p-10 flex flex-col justify-between group hover:shadow-2xl transition-all duration-500 relative overflow-hidden">
+                        <div className="min-h-[240px] bg-[#0F172A] rounded-[40px] p-10 flex flex-col justify-between group hover:shadow-2xl transition-all duration-500 relative overflow-hidden">
                             <div className="absolute inset-0 bg-gradient-to-br from-teal-500/10 to-transparent" />
                             <div>
                                 <AudioLines className="text-teal-400 mb-6" size={32} />
@@ -64,14 +64,14 @@ const Landing = () => {
                         </div>
 
                         {/* FEATURE 3: 3D Avatars */}
-                        <div className="md:col-span-2 lg:col-span-2 bg-teal-50 border border-teal-100 rounded-[40px] p-10 flex flex-col items-center justify-center text-center group transition-all duration-500">
+                        <div className="min-h-[240px] bg-teal-50 border border-teal-100 rounded-[40px] p-10 flex flex-col items-center justify-center text-center group transition-all duration-500">
                             <Video className="text-[#0D9488] mb-6 animate-pulse" size={40} />
                             <h3 className="text-2xl font-black mb-2 tracking-tight">🧑💻 3D Virtual Hosts</h3>
                             <p className="text-slate-500 text-sm font-bold">Present your podcast through customizable digital influencers.</p>
                         </div>
 
                         {/* FEATURE 4: Speed */}
-                        <div className="md:col-span-2 lg:col-span-2 bg-white border border-slate-200 rounded-[40px] p-8 flex items-center gap-6 group transition-all duration-500">
+                        <div className="min-h-[240px] bg-white border border-slate-200 rounded-[40px] p-8 flex items-center gap-6 group transition-all duration-500">
                             <div className="w-16 h-16 bg-slate-50 rounded-3xl flex items-center justify-center shrink-0">
                                 <Zap className="text-slate-400 group-hover:text-[#0D9488] transition-colors" size={28} />
                             </div>
@@ -82,13 +82,24 @@ const Landing = () => {
                         </div>
 
                         {/* FEATURE 5: Multi-Platform Export */}
-                        <div className="md:col-span-2 lg:col-span-2 bg-white border border-slate-200 rounded-[40px] p-8 flex items-center gap-6 group transition-all duration-500">
+                        <div className="min-h-[240px] bg-white border border-slate-200 rounded-[40px] p-8 flex items-center gap-6 group transition-all duration-500">
                             <div className="w-16 h-16 bg-slate-50 rounded-3xl flex items-center justify-center shrink-0">
                                 <Share2 className="text-slate-400" size={28} />
                             </div>
                             <div>
                                 <h3 className="text-xl font-black tracking-tight">📤 Multi-Platform Export</h3>
                                 <p className="text-slate-500 text-xs font-bold leading-none mt-1">Download audio and video podcast files instantly.</p>
+                            </div>
+                        </div>
+
+                        {/* FEATURE 6: Chat with Host */}
+                        <div className="min-h-[240px] bg-gradient-to-br from-teal-50 to-white border border-teal-100 rounded-[40px] p-8 flex items-center gap-6 group transition-all duration-500 hover:shadow-xl hover:shadow-teal-100/60">
+                            <div className="w-16 h-16 bg-white rounded-3xl flex items-center justify-center shrink-0 border border-teal-100 shadow-sm">
+                                <MessageSquare className="text-[#0D9488]" size={28} />
+                            </div>
+                            <div>
+                                <h3 className="text-xl font-black tracking-tight">Chat with Host</h3>
+                                <p className="text-slate-500 text-xs font-bold leading-none mt-1">Ask questions during playback and get instant answers from the AI host.</p>
                             </div>
                         </div>
 

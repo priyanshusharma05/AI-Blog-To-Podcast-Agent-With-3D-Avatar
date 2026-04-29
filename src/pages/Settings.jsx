@@ -133,7 +133,7 @@ const Settings = () => {
 
                                 <div className="mt-auto pt-4 border-t border-slate-100 dark:border-slate-800 flex flex-col gap-1">
                                     <SideLink icon={SettingsIcon} label="Settings" active={activeNav === 'settings'} onClick={() => { setActiveNav('settings'); setIsMobileMenuOpen(false); }} />
-                                    <SideLink icon={LogOut} label="Logout" active={false} onClick={() => { localStorage.removeItem('vc_user'); navigate('/'); }} />
+                                    <SideLink icon={LogOut} label="Logout" active={false} onClick={() => { localStorage.removeItem('vc_user'); localStorage.removeItem('vc_token'); navigate('/'); }} />
                                 </div>
                             </nav>
                         </motion.aside>
@@ -164,7 +164,7 @@ const Settings = () => {
 
                     <div className="mt-auto pt-4 border-t border-slate-100 dark:border-slate-800 flex flex-col gap-1">
                         <SideLink icon={SettingsIcon} label="Settings" active={activeNav === 'settings'} onClick={() => setActiveNav('settings')} />
-                        <SideLink icon={LogOut} label="Logout" active={false} onClick={() => { localStorage.removeItem('vc_user'); navigate('/'); }} />
+                        <SideLink icon={LogOut} label="Logout" active={false} onClick={() => { localStorage.removeItem('vc_user'); localStorage.removeItem('vc_token'); navigate('/'); }} />
                     </div>
                 </nav>
 
@@ -284,7 +284,7 @@ const Settings = () => {
                                     danger 
                                     action={
                                         <button 
-                                            onClick={() => { localStorage.removeItem('vc_user'); navigate('/'); }}
+                                            onClick={() => { localStorage.removeItem('vc_user'); localStorage.removeItem('vc_token'); navigate('/'); }}
                                             className="text-[10px] font-black text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 px-4 py-2 rounded-xl border border-red-100 dark:border-red-500/20 uppercase transition-all"
                                         >
                                             Log Out

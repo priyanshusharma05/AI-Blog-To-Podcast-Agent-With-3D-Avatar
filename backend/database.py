@@ -10,11 +10,10 @@ Visible in MongoDB Compass at: mongodb://localhost:27017
 """
 
 import os
-
-from dotenv import load_dotenv
 from motor.motor_asyncio import AsyncIOMotorClient
+from env_config import load_backend_env
 
-load_dotenv()
+load_backend_env()
 
 MONGO_URI: str = os.getenv("MONGO_URI", "mongodb://localhost:27017")
 MONGO_DB_NAME: str = os.getenv("MONGO_DB_NAME", "voicecast")

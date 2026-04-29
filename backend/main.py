@@ -28,7 +28,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="VoiceCast AI — Blog to Podcast API",
     description=(
-        "Converts blog posts into AI-generated podcast scripts using Gemini 2.5 Flash. "
+        "Converts blog posts into AI-generated podcast scripts using Groq. "
         "Data is stored in MongoDB (voicecast DB). "
         "Swagger UI available at /docs."
     ),

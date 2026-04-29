@@ -4,7 +4,7 @@ routers/chat.py — Chatbot endpoint for podcast script Q&A.
 POST /api/chat
   - Accepts a user message, optional episode_id, and conversation history
   - If episode_id is provided, fetches the script from MongoDB as context
-  - Calls the Gemini-powered chatbot and returns the reply + updated history
+  - Calls the Groq-powered chatbot and returns the answer + suggestions
 """
 
 from __future__ import annotations
@@ -12,8 +12,9 @@ from __future__ import annotations
 import asyncio
 
 from bson import ObjectId
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status
 
+from auth_utils import get_current_user_id
 from database import get_db
 from models import ChatRequest, ChatResponse
 from services.chatbot import chat
@@ -28,14 +29,16 @@ async def _run_in_thread(func, *args):
 
 
 @router.post("/", response_model=ChatResponse, status_code=status.HTTP_200_OK)
-async def chat_endpoint(body: ChatRequest):
+async def chat_endpoint(
+    body: ChatRequest,
+    current_user_id: str = Depends(get_current_user_id),
+):
     """
     Chat with the VoiceCast AI assistant about a podcast script.
 
     - If ``episode_id`` is provided, the episode's script is loaded from
       MongoDB and used as context for the conversation.
-    - ``history`` maintains multi-turn conversation state (pass it back
-      on each subsequent request).
+    - ``history`` maintains multi-turn conversation state from the client.
     """
 
     script_context = ""
@@ -50,7 +53,7 @@ async def chat_endpoint(body: ChatRequest):
                 status_code=400, detail="Invalid episode_id format."
             )
 
-        doc = await db.episodes.find_one({"_id": oid})
+        doc = await db.episodes.find_one({"_id": oid, "user_id": current_user_id})
         if not doc:
             raise HTTPException(
                 status_code=404, detail="Episode not found."
@@ -63,7 +66,7 @@ async def chat_endpoint(body: ChatRequest):
         for msg in (body.history or [])
     ]
 
-    # ── Call chatbot (blocking Gemini call → thread pool) ───────────────────
+    # ── Call chatbot (blocking Groq call → thread pool) ─────────────────────
     try:
         result = await _run_in_thread(
             chat,
@@ -79,9 +82,6 @@ async def chat_endpoint(body: ChatRequest):
         raise HTTPException(status_code=500, detail=f"Chat error: {exc}")
 
     return ChatResponse(
-        reply=result["reply"],
-        history=[
-            {"role": h["role"], "content": h["content"]}
-            for h in result["history"]
-        ],
+        answer=result["answer"],
+        suggestions=result["suggestions"],
     )

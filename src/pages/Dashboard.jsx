@@ -7,6 +7,7 @@ import {
     CheckCircle2, Zap, FileText, Loader2, Sun, Moon, Menu, X
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
+import { authFetch } from '../utils/authFetch';
 
 /* ─── Sidebar link (shared style) ───────────────── */
 const SideLink = ({ icon: Icon, label, active, onClick }) => (
@@ -97,7 +98,7 @@ const Dashboard = () => {
         const fetchEpisodes = async () => {
             setEpisodesLoading(true);
             try {
-                const res = await fetch('/api/episodes/');
+                const res = await authFetch('/api/episodes/');
                 if (!res.ok) throw new Error(`Server error: ${res.status}`);
                 const data = await res.json();
                 setEpisodes(Array.isArray(data) ? data : []);
@@ -167,7 +168,7 @@ const Dashboard = () => {
 
                                 <div className="mt-auto pt-4 border-t border-slate-100 dark:border-slate-800 flex flex-col gap-1">
                                     <SideLink icon={Settings} label="Settings" active={false} onClick={() => { navigate('/settings'); setIsMobileMenuOpen(false); }} />
-                                    <SideLink icon={LogOut} label="Logout" active={false} onClick={() => { localStorage.removeItem('vc_user'); navigate('/'); }} />
+                                    <SideLink icon={LogOut} label="Logout" active={false} onClick={() => { localStorage.removeItem('vc_user'); localStorage.removeItem('vc_token'); navigate('/'); }} />
                                 </div>
                             </nav>
                         </motion.aside>
@@ -198,7 +199,7 @@ const Dashboard = () => {
 
                     <div className="mt-auto pt-4 border-t border-slate-100 dark:border-slate-800 flex flex-col gap-1">
                         <SideLink icon={Settings} label="Settings" active={false} onClick={() => navigate('/settings')} />
-                        <SideLink icon={LogOut} label="Logout" active={false} onClick={() => { localStorage.removeItem('vc_user'); navigate('/'); }} />
+                        <SideLink icon={LogOut} label="Logout" active={false} onClick={() => { localStorage.removeItem('vc_user'); localStorage.removeItem('vc_token'); navigate('/'); }} />
                     </div>
                 </nav>
 
@@ -251,6 +252,56 @@ const Dashboard = () => {
                 </header>
 
                 <div className="flex-1 px-6 md:px-10 py-8 overflow-y-auto">
+                    <motion.div
+                        initial={{ opacity: 0, y: 14 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="mb-8 overflow-hidden rounded-[32px] border border-slate-200/60 bg-gradient-to-br from-[#0f172a] via-[#132338] to-[#0D9488] p-6 text-white shadow-[0_35px_90px_-50px_rgba(15,23,42,0.85)]"
+                    >
+                        <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
+                            <div>
+                                <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.18em] text-teal-100">
+                                    <Sparkles size={12} />
+                                    Studio overview
+                                </div>
+                                <h2 className="mt-4 text-2xl md:text-3xl font-black tracking-tight">
+                                    Your podcast workspace is ready for the next move.
+                                </h2>
+                                <p className="mt-3 max-w-xl text-sm font-medium leading-6 text-slate-200">
+                                    Track what is live, what is still rendering, and where to jump next without digging through separate screens.
+                                </p>
+                                <div className="mt-5 flex flex-col gap-3 sm:flex-row">
+                                    <button
+                                        onClick={() => navigate('/create-episode')}
+                                        className="inline-flex items-center justify-center gap-2 rounded-2xl bg-white px-5 py-3 text-sm font-black text-slate-900"
+                                    >
+                                        <PlusCircle size={15} />
+                                        Create Episode
+                                    </button>
+                                    <button
+                                        onClick={() => navigate('/episodes')}
+                                        className="inline-flex items-center justify-center gap-2 rounded-2xl border border-white/15 bg-white/10 px-5 py-3 text-sm font-black text-white backdrop-blur"
+                                    >
+                                        Open Library
+                                        <ArrowUpRight size={14} />
+                                    </button>
+                                </div>
+                            </div>
+                            <div className="grid gap-3 sm:grid-cols-2">
+                                {[
+                                    { label: 'Ready now', value: (episodes || []).filter((ep) => ep.status === 'ready').length, sub: 'episodes available to play' },
+                                    { label: 'In progress', value: (episodes || []).filter((ep) => ep.status === 'generating').length, sub: 'rendering in the background' },
+                                    { label: 'Total listens', value: (episodes || []).reduce((acc, ep) => acc + (ep.views || 0), 0), sub: 'audience engagement tracked' },
+                                    { label: 'Library size', value: (episodes || []).length, sub: 'episodes in your workspace' },
+                                ].map((item) => (
+                                    <div key={item.label} className="rounded-[22px] border border-white/10 bg-white/10 p-4 backdrop-blur">
+                                        <p className="text-[10px] font-black uppercase tracking-[0.18em] text-teal-100/80">{item.label}</p>
+                                        <p className="mt-2 text-3xl font-black text-white">{item.value}</p>
+                                        <p className="mt-2 text-xs font-medium text-slate-200">{item.sub}</p>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </motion.div>
 
                     {/* ── Stats Row ── */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
@@ -331,6 +382,19 @@ const Dashboard = () => {
                                                     <div className="flex items-center gap-3 mt-0.5">
                                                         <span className="text-xs text-slate-400 dark:text-slate-500 flex items-center gap-1"><Clock size={10} /> {ep.duration || '--'}</span>
                                                         <span className="text-xs text-slate-400 dark:text-slate-500">{ep.date || ''}</span>
+                                                    </div>
+                                                    <div className="mt-3 flex items-end gap-1 h-8">
+                                                        {[0.35, 0.6, 0.45, 0.78, 0.55, 0.82, 0.48, 0.66].map((bar, index) => (
+                                                            <motion.div
+                                                                key={index}
+                                                                animate={ep.status === 'generating'
+                                                                    ? { height: [`${bar * 40}%`, `${bar * 100}%`, `${bar * 40}%`] }
+                                                                    : { height: `${bar * 100}%` }
+                                                                }
+                                                                transition={{ duration: 1.2 + index * 0.07, repeat: ep.status === 'generating' ? Infinity : 0, ease: 'easeInOut' }}
+                                                                className={`flex-1 rounded-full ${ep.status === 'ready' ? 'bg-gradient-to-t from-[#0D9488] to-teal-300' : 'bg-gradient-to-t from-amber-500 to-amber-300'}`}
+                                                            />
+                                                        ))}
                                                     </div>
                                                 </div>
                                                 <div className="flex items-center gap-3 shrink-0">
