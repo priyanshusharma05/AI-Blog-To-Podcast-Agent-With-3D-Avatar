@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     LayoutDashboard, PlusCircle, AudioLines, Settings, LogOut,
@@ -6,9 +6,10 @@ import {
     Play, Pause, Volume2, VolumeX, Maximize, SkipBack, SkipForward,
     ThumbsUp, ThumbsDown, Share2, Bookmark, MoreHorizontal,
     Send, MessageCircle, Clock, Eye, ArrowLeft, Headphones, 
-    Sparkles, Info, ListMusic
+    Sparkles, Info, FileText
 } from 'lucide-react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
+import { authFetch } from '../utils/authFetch';
 
 /* ─── Sidebar link (shared style) ───────────────── */
 const SideLink = ({ icon: Icon, label, active, onClick }) => (
@@ -80,11 +81,54 @@ const AnimatedWaveform = ({ isPlaying }) => {
     );
 };
 
+const buildCaptionSegments = (script, totalSeconds) => {
+    if (!script) return [];
+
+    const cleanedScript = script
+        .replace(/\r/g, '')
+        .replace(/\n{2,}/g, '\n')
+        .trim();
+
+    const sentenceParts = cleanedScript
+        .split(/(?<=[.!?])\s+|\n+/)
+        .map((part) => part.trim())
+        .filter(Boolean);
+
+    if (!sentenceParts.length) return [];
+
+    const segments = [];
+    let currentSegment = '';
+
+    sentenceParts.forEach((part) => {
+        if ((currentSegment + ' ' + part).trim().length > 140 && currentSegment) {
+            segments.push(currentSegment.trim());
+            currentSegment = part;
+        } else {
+            currentSegment = `${currentSegment} ${part}`.trim();
+        }
+    });
+
+    if (currentSegment) {
+        segments.push(currentSegment.trim());
+    }
+
+    const safeDuration = Math.max(totalSeconds || 0, segments.length * 4, 8);
+    const segmentDuration = safeDuration / segments.length;
+
+    return segments.map((text, index) => ({
+        id: `${index}-${text.slice(0, 12)}`,
+        text,
+        start: Math.floor(index * segmentDuration),
+        end: index === segments.length - 1 ? Math.ceil(safeDuration) : Math.floor((index + 1) * segmentDuration),
+    }));
+};
+
 const VideoPlayer = () => {
     const navigate = useNavigate();
     const { id } = useParams();
     const chatEndRef = useRef(null);
     const playerRef = useRef(null);
+    const utteranceRef = useRef(null);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [isDark, setIsDark] = useState(() => document.documentElement.classList.contains('dark'));
     const [chatOpen, setChatOpen] = useState(true);
@@ -97,18 +141,32 @@ const VideoPlayer = () => {
     const [volume, setVolume] = useState(80);
     const [isMuted, setIsMuted] = useState(false);
     const [currentTime, setCurrentTime] = useState(0);
+    const [captionsEnabled, setCaptionsEnabled] = useState(() => {
+        const stored = localStorage.getItem('vc_captions_enabled');
+        return stored === null ? true : stored === 'true';
+    });
 
     // Episode data
     const [episode, setEpisode] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
 
-    // Chat state
+    // Audio state
+    const [audioReady, setAudioReady] = useState(false);
+    const [audioUrl, setAudioUrl] = useState('');
+    const audioRef = useRef(null);
+    const [audioDuration, setAudioDuration] = useState(0);
     const [chatMessages, setChatMessages] = useState([
-        { id: 1, user: 'System', avatar: '🎙️', text: 'Welcome to the Live Experience! Join the conversation below.', time: '12:00 PM', isOwn: false },
-        { id: 2, user: 'AI Narrator', avatar: '🤖', text: 'I hope you’re enjoying this breakdown of the article. Any thoughts on the last point?', time: '12:02 PM', isOwn: false },
+        { id: 1, user: 'System', avatar: '🎙️', text: 'Welcome to the Live Experience! Ask the AI anything about this episode.', time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), isOwn: false },
     ]);
     const [chatInput, setChatInput] = useState('');
+    const [chatHistory, setChatHistory] = useState([]);
+    const [followUpSuggestions, setFollowUpSuggestions] = useState([]);
+    const [isChatLoading, setIsChatLoading] = useState(false);
+    const [summary, setSummary] = useState('');
+    const [summaryVisible, setSummaryVisible] = useState(false);
+    const [summaryLoading, setSummaryLoading] = useState(false);
+    const [summaryError, setSummaryError] = useState('');
 
     useEffect(() => {
         if (isDark) {
@@ -119,6 +177,10 @@ const VideoPlayer = () => {
             localStorage.setItem('vc_theme', 'light');
         }
     }, [isDark]);
+
+    useEffect(() => {
+        localStorage.setItem('vc_captions_enabled', String(captionsEnabled));
+    }, [captionsEnabled]);
 
     const toggleTheme = () => setIsDark(!isDark);
 
@@ -134,15 +196,21 @@ const VideoPlayer = () => {
     const userName = user.name || 'Guest';
     const initials = userName.split(' ').map(w => w ? w[0] : '').join('').toUpperCase().slice(0, 2);
 
+    // ── Fetch episode data ──────────────────────────────────────────────────
     useEffect(() => {
         const fetchEpisode = async () => {
             setLoading(true);
             try {
-                const res = await fetch('/api/episodes/');
+                const res = await authFetch(`/api/episodes/${id}`);
                 if (!res.ok) throw new Error(`Server error: ${res.status}`);
-                const data = await res.json();
-                const ep = (Array.isArray(data) ? data : []).find(e => String(e.id) === String(id));
-                if (ep) setEpisode(ep);
+                const ep = await res.json();
+                if (ep) {
+                    setEpisode(ep);
+                    if (ep.audio_url) {
+                        setAudioUrl(ep.audio_url);
+                        setAudioReady(true);
+                    }
+                }
                 else setError('Episode not found.');
             } catch (err) {
                 setError('Could not load episode. Is the backend running?');
@@ -153,46 +221,278 @@ const VideoPlayer = () => {
         fetchEpisode();
     }, [id]);
 
+    // ── Poll for audio readiness if not ready yet ────────────────────────────
+    useEffect(() => {
+        if (audioReady || !episode) return;
+        const interval = setInterval(async () => {
+            try {
+                const res = await fetch(`/api/audio/${id}/status`);
+                const data = await res.json();
+                if (data.status === 'ready' && data.audio_url) {
+                    setAudioUrl(data.audio_url);
+                    setAudioReady(true);
+                    clearInterval(interval);
+                }
+            } catch (e) { /* keep polling */ }
+        }, 3000);
+        return () => clearInterval(interval);
+    }, [audioReady, episode, id]);
+
+    // ── HTML5 Audio event handlers ───────────────────────────────────────────
+    useEffect(() => {
+        const audio = audioRef.current;
+        if (!audio || !audioUrl) return;
+
+        audio.src = audioUrl;
+        audio.volume = isMuted ? 0 : volume / 100;
+
+        const onLoadedMetadata = () => {
+            setAudioDuration(audio.duration || 0);
+        };
+        const onTimeUpdate = () => {
+            if (audio.duration) {
+                setProgress((audio.currentTime / audio.duration) * 100);
+                setCurrentTime(Math.floor(audio.currentTime));
+            }
+        };
+        const onEnded = () => {
+            setIsPlaying(false);
+            setProgress(100);
+        };
+
+        audio.addEventListener('loadedmetadata', onLoadedMetadata);
+        audio.addEventListener('timeupdate', onTimeUpdate);
+        audio.addEventListener('ended', onEnded);
+
+        return () => {
+            audio.removeEventListener('loadedmetadata', onLoadedMetadata);
+            audio.removeEventListener('timeupdate', onTimeUpdate);
+            audio.removeEventListener('ended', onEnded);
+        };
+    }, [audioUrl]);
+
+    // ── Sync volume/mute to audio element ────────────────────────────────────
+    useEffect(() => {
+        if (audioRef.current) {
+            audioRef.current.volume = isMuted ? 0 : volume / 100;
+        }
+    }, [volume, isMuted]);
+
+    // ── Play / Pause ────────────────────────────────────────────────────────
+    useEffect(() => {
+        const audio = audioRef.current;
+        if (!audio || !audioReady) return;
+        if (isPlaying) {
+            audio.play().catch(() => {});
+        } else {
+            audio.pause();
+        }
+    }, [isPlaying, audioReady]);
+
+    // ── TTS Fallback (browser SpeechSynthesis) if no MP3 yet ────────────────
+    const [ttsVoice, setTtsVoice] = useState(null);
+    const ttsQueueRef = useRef([]);
+    const ttsIndexRef = useRef(0);
+    const ttsActiveRef = useRef(false);
+
+    useEffect(() => {
+        const synth = window.speechSynthesis;
+        const pickVoice = () => {
+            const voices = synth.getVoices();
+            if (!voices.length) return;
+            const preferred =
+                voices.find(v => v.lang.startsWith('en') && v.name.toLowerCase().includes('google')) ||
+                voices.find(v => v.lang.startsWith('en') && !v.localService) ||
+                voices.find(v => v.lang.startsWith('en')) ||
+                voices[0];
+            setTtsVoice(preferred);
+        };
+        pickVoice();
+        synth.addEventListener('voiceschanged', pickVoice);
+        return () => synth.removeEventListener('voiceschanged', pickVoice);
+    }, []);
+
+    const buildTtsQueue = (text) => {
+        if (!text) return [];
+        const sentences = text.match(/[^.!?]+[.!?]+[\s]*/g) || [text];
+        const chunks = [];
+        let current = '';
+        for (const s of sentences) {
+            if (current.length + s.length > 300 && current.length > 0) {
+                chunks.push(current.trim());
+                current = s;
+            } else {
+                current += s;
+            }
+        }
+        if (current.trim()) chunks.push(current.trim());
+        return chunks;
+    };
+
+    const speakNext = () => {
+        const synth = window.speechSynthesis;
+        if (!ttsActiveRef.current) return;
+        if (ttsIndexRef.current >= ttsQueueRef.current.length) {
+            ttsActiveRef.current = false;
+            setIsPlaying(false);
+            setProgress(100);
+            return;
+        }
+        const text = ttsQueueRef.current[ttsIndexRef.current];
+        const utt = new SpeechSynthesisUtterance(text);
+        utt.rate = 1;
+        utt.pitch = 1;
+        utt.volume = isMuted ? 0 : volume / 100;
+        if (ttsVoice) utt.voice = ttsVoice;
+        utt.onend = () => { ttsIndexRef.current += 1; speakNext(); };
+        utt.onerror = (e) => {
+            if (e.error !== 'interrupted' && e.error !== 'canceled') {
+                ttsIndexRef.current += 1;
+                speakNext();
+            }
+        };
+        utteranceRef.current = utt;
+        synth.speak(utt);
+    };
+
+    // TTS fallback play/pause (only when no audio file)
+    useEffect(() => {
+        if (audioReady || !episode?.script) return;
+        const synth = window.speechSynthesis;
+        if (isPlaying) {
+            if (synth.paused) {
+                synth.resume();
+            } else if (!synth.speaking) {
+                synth.cancel();
+                ttsQueueRef.current = buildTtsQueue(episode.script);
+                ttsIndexRef.current = 0;
+                ttsActiveRef.current = true;
+                speakNext();
+            }
+        } else {
+            if (synth.speaking && !synth.paused) synth.pause();
+        }
+    }, [isPlaying, audioReady]);
+
+    useEffect(() => {
+        return () => {
+            ttsActiveRef.current = false;
+            window.speechSynthesis.cancel();
+        };
+    }, []);
+
+    // Fake progress for TTS fallback
     useEffect(() => {
         let interval;
-        if (isPlaying && episode) {
+        if (isPlaying && !audioReady && episode) {
             interval = setInterval(() => {
                 setProgress(prev => (prev >= 100 ? 100 : prev + 0.1));
                 setCurrentTime(prev => prev + 1);
             }, 1000);
         }
         return () => clearInterval(interval);
-    }, [isPlaying, episode]);
+    }, [isPlaying, audioReady, episode]);
 
+    // Chat scroll
     useEffect(() => {
         chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [chatMessages]);
 
-    const handleSendMessage = () => {
-        if (!chatInput.trim()) return;
+    // ── Chat: send message to /api/chat/ backend ─────────────────────────
+    const handleSendMessage = async () => {
+        if (!chatInput.trim() || isChatLoading) return;
         const now = new Date();
         const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        
+        const userMsg = chatInput.trim();
+
         setChatMessages(prev => [...prev, {
             id: Date.now(),
             user: userName,
             avatar: initials,
-            text: chatInput.trim(),
+            text: userMsg,
             time: timeStr,
             isOwn: true,
         }]);
         setChatInput('');
+        setFollowUpSuggestions([]);
+        setIsChatLoading(true);
 
-        setTimeout(() => {
+        try {
+            const res = await authFetch('/api/chat/', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    message: userMsg,
+                    episode_id: id || null,
+                    history: chatHistory.map(h => ({ role: h.role, content: h.content })),
+                }),
+            });
+
+            if (!res.ok) {
+                const errData = await res.json().catch(() => ({}));
+                throw new Error(errData.detail || `Server error: ${res.status}`);
+            }
+
+            const data = await res.json();
+            const answer = data.answer || data.reply || '';
+
             setChatMessages(prev => [...prev, {
                 id: Date.now() + 1,
                 user: 'AI Narrator',
                 avatar: '🤖',
-                text: "That's a fascinating perspective! I'll make sure to touch on that in our next deep dive.",
+                text: answer,
                 time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
                 isOwn: false,
             }]);
-        }, 1500);
+
+            setChatHistory(prev => [
+                ...prev,
+                { role: 'user', content: userMsg },
+                { role: 'assistant', content: answer },
+            ]);
+            setFollowUpSuggestions(Array.isArray(data.suggestions) ? data.suggestions : []);
+        } catch (err) {
+            setChatMessages(prev => [...prev, {
+                id: Date.now() + 1,
+                user: 'System',
+                avatar: '⚠️',
+                text: `Error: ${err.message}`,
+                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                isOwn: false,
+            }]);
+        } finally {
+            setIsChatLoading(false);
+        }
+    };
+
+    const handleSuggestionClick = (suggestion) => {
+        setChatInput(suggestion);
+    };
+
+    const handleViewSummary = async () => {
+        if (!id || summaryLoading) return;
+
+        if (summary) {
+            setSummaryVisible((visible) => !visible);
+            return;
+        }
+
+        setSummaryVisible(true);
+        setSummaryLoading(true);
+        setSummaryError('');
+
+        try {
+            const res = await authFetch(`/api/episodes/${id}/summary`);
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) {
+                throw new Error(data.detail || `Server error: ${res.status}`);
+            }
+            setSummary(data.summary || '');
+        } catch (err) {
+            setSummaryError(err.message || 'Could not load summary.');
+        } finally {
+            setSummaryLoading(false);
+        }
     };
 
     const formatTime = (seconds) => {
@@ -201,7 +501,23 @@ const VideoPlayer = () => {
         return `${mins}:${secs.toString().padStart(2, '0')}`;
     };
 
-    const totalDuration = episode ? (parseInt(episode.duration) || 5) * 60 : 300;
+    const totalDuration = audioReady && audioDuration > 0 
+        ? Math.floor(audioDuration) 
+        : episode ? (parseInt(episode.duration) || 5) * 60 : 300;
+
+    const captionSegments = useMemo(
+        () => buildCaptionSegments(episode?.script || '', totalDuration),
+        [episode?.script, totalDuration]
+    );
+
+    const activeCaptionIndex = useMemo(() => {
+        if (!captionSegments.length) return -1;
+        return captionSegments.findIndex((segment) => currentTime >= segment.start && currentTime < segment.end);
+    }, [captionSegments, currentTime]);
+
+    const activeCaption = activeCaptionIndex >= 0
+        ? captionSegments[activeCaptionIndex]
+        : captionSegments[0] || null;
 
     const toggleFullscreen = () => {
         if (!playerRef.current) return;
@@ -245,7 +561,7 @@ const VideoPlayer = () => {
                     <SideLink icon={BarChart3} label="Analytics" active={false} onClick={() => navigate('/analytics')} />
                     <div className="mt-auto pt-6 border-t border-slate-100 dark:border-white/5 flex flex-col gap-1.5">
                         <SideLink icon={Settings} label="Settings" active={false} onClick={() => navigate('/settings')} />
-                        <SideLink icon={LogOut} label="Logout" active={false} onClick={() => { localStorage.removeItem('vc_user'); navigate('/'); }} />
+                        <SideLink icon={LogOut} label="Logout" active={false} onClick={() => { localStorage.removeItem('vc_user'); localStorage.removeItem('vc_token'); navigate('/'); }} />
                     </div>
                 </nav>
             </aside>
@@ -298,6 +614,29 @@ const VideoPlayer = () => {
                                 
                                 {/* Animated Visual Content */}
                                 <div className="absolute inset-0 flex flex-col items-center justify-center gap-8">
+                                    {/* Hidden audio element for real MP3 playback */}
+                                    <audio ref={audioRef} preload="auto" />
+                                    
+                                    {/* Audio status indicator */}
+                                    {!audioReady && episode && (
+                                        <motion.div
+                                            initial={{ opacity: 0 }}
+                                            animate={{ opacity: 1 }}
+                                            className="absolute top-6 left-1/2 -translate-x-1/2 bg-amber-500/20 border border-amber-500/30 text-amber-300 text-[10px] font-black uppercase tracking-widest px-4 py-2 rounded-full backdrop-blur-sm z-10"
+                                        >
+                                            🎙️ Generating MP3 Audio...
+                                        </motion.div>
+                                    )}
+                                    {audioReady && (
+                                        <motion.div
+                                            initial={{ opacity: 0 }}
+                                            animate={{ opacity: 1 }}
+                                            className="absolute top-6 left-1/2 -translate-x-1/2 bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 text-[10px] font-black uppercase tracking-widest px-4 py-2 rounded-full backdrop-blur-sm z-10"
+                                        >
+                                            ✅ HD Audio Ready
+                                        </motion.div>
+                                    )}
+
                                     <motion.div 
                                         animate={isPlaying ? { 
                                             scale: [1, 1.05, 1],
@@ -329,6 +668,22 @@ const VideoPlayer = () => {
                                     </div>
                                 </div>
 
+                                {captionsEnabled && activeCaption && (
+                                    <div className="pointer-events-none absolute inset-x-0 bottom-28 z-20 flex justify-center px-6">
+                                        <motion.div
+                                            key={activeCaption.id}
+                                            initial={{ opacity: 0, y: 10 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            transition={{ duration: 0.2 }}
+                                            className="max-w-3xl rounded-2xl bg-black/72 px-5 py-3 text-center shadow-[0_10px_30px_rgba(0,0,0,0.35)] backdrop-blur-sm"
+                                        >
+                                            <p className="text-base font-semibold leading-relaxed text-white md:text-lg [text-shadow:0_2px_10px_rgba(0,0,0,0.6)]">
+                                                {activeCaption.text}
+                                            </p>
+                                        </motion.div>
+                                    </div>
+                                )}
+
                                 {/* Modern Controls Overlay */}
                                 <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/95 via-black/40 to-transparent p-8 pt-20 translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300">
                                     {/* Progress Bar */}
@@ -338,7 +693,12 @@ const VideoPlayer = () => {
                                                 const rect = e.currentTarget.getBoundingClientRect();
                                                 const pct = ((e.clientX - rect.left) / rect.width) * 100;
                                                 setProgress(pct);
-                                                setCurrentTime(Math.floor((pct/100) * totalDuration));
+                                                const newTime = Math.floor((pct / 100) * totalDuration);
+                                                setCurrentTime(newTime);
+                                                // Seek in real audio if available
+                                                if (audioRef.current && audioReady) {
+                                                    audioRef.current.currentTime = newTime;
+                                                }
                                             }}
                                         >
                                             <motion.div 
@@ -354,7 +714,14 @@ const VideoPlayer = () => {
 
                                     <div className="flex items-center justify-between">
                                         <div className="flex items-center gap-6">
-                                            <button onClick={() => { setProgress(Math.max(0, progress-5)); setCurrentTime(Math.max(0, currentTime-10)); }} className="text-white/50 hover:text-white transition-colors">
+                                            <button onClick={() => {
+                                                if (audioRef.current && audioReady) {
+                                                    audioRef.current.currentTime = Math.max(0, audioRef.current.currentTime - 10);
+                                                } else {
+                                                    setProgress(Math.max(0, progress-5));
+                                                    setCurrentTime(Math.max(0, currentTime-10));
+                                                }
+                                            }} className="text-white/50 hover:text-white transition-colors">
                                                 <SkipBack size={24} />
                                             </button>
                                             <motion.button 
@@ -365,7 +732,14 @@ const VideoPlayer = () => {
                                             >
                                                 {isPlaying ? <Pause size={28} fill="currentColor" /> : <Play size={28} fill="currentColor" className="ml-1" />}
                                             </motion.button>
-                                            <button onClick={() => { setProgress(Math.min(100, progress+5)); setCurrentTime(Math.min(totalDuration, currentTime+10)); }} className="text-white/50 hover:text-white transition-colors">
+                                            <button onClick={() => {
+                                                if (audioRef.current && audioReady) {
+                                                    audioRef.current.currentTime = Math.min(audioRef.current.duration || totalDuration, audioRef.current.currentTime + 10);
+                                                } else {
+                                                    setProgress(Math.min(100, progress+5));
+                                                    setCurrentTime(Math.min(totalDuration, currentTime+10));
+                                                }
+                                            }} className="text-white/50 hover:text-white transition-colors">
                                                 <SkipForward size={24} />
                                             </button>
                                         </div>
@@ -382,6 +756,17 @@ const VideoPlayer = () => {
                                                     className="w-16 accent-[#0D9488] opacity-50 hover:opacity-100 transition-opacity" 
                                                 />
                                             </div>
+                                            <button
+                                                onClick={() => setCaptionsEnabled(!captionsEnabled)}
+                                                className={`min-w-12 h-11 rounded-2xl border px-3 text-xs font-black uppercase tracking-[0.22em] transition-all ${
+                                                    captionsEnabled
+                                                        ? 'border-teal-400/40 bg-teal-500/15 text-teal-200 shadow-[0_0_20px_rgba(45,212,191,0.15)]'
+                                                        : 'border-white/10 bg-white/5 text-white/55'
+                                                }`}
+                                                title={captionsEnabled ? 'Turn captions off' : 'Turn captions on'}
+                                            >
+                                                CC
+                                            </button>
                                             <button onClick={toggleFullscreen} className="text-white/50 hover:text-white transition-colors">
                                                 <Maximize size={20} />
                                             </button>
@@ -395,7 +780,40 @@ const VideoPlayer = () => {
                         <section className="space-y-6">
                             <div className="bg-white dark:bg-[#0D0F11] rounded-[32px] p-8 border border-slate-100 dark:border-white/5 shadow-sm">
                                 <div className="space-y-6">
-                                    <h2 className="text-2xl font-black text-slate-800 dark:text-white tracking-tight">{episode?.title}</h2>
+                                    <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                                        <h2 className="text-2xl font-black text-slate-800 dark:text-white tracking-tight">{episode?.title}</h2>
+                                        <button
+                                            type="button"
+                                            onClick={handleViewSummary}
+                                            disabled={summaryLoading || !episode?.script}
+                                            className="inline-flex items-center justify-center gap-2 rounded-2xl bg-[#0D9488] px-4 py-2.5 text-xs font-black text-white shadow-lg shadow-teal-500/20 transition-all hover:bg-teal-700 disabled:cursor-not-allowed disabled:opacity-50"
+                                        >
+                                            {summaryLoading ? (
+                                                <Sparkles size={14} className="animate-spin" />
+                                            ) : (
+                                                <FileText size={14} />
+                                            )}
+                                            {summary ? (summaryVisible ? 'Hide Summary' : 'View Summary') : 'View Summary'}
+                                        </button>
+                                    </div>
+
+                                    {summaryVisible && (
+                                        <div className="rounded-[24px] border border-teal-100 bg-teal-50/70 p-5 dark:border-teal-500/20 dark:bg-teal-500/10">
+                                            <div className="mb-3 flex items-center gap-2">
+                                                <FileText size={15} className="text-[#0D9488] dark:text-teal-300" />
+                                                <p className="text-xs font-black uppercase tracking-[0.18em] text-[#0D9488] dark:text-teal-300">Episode Summary</p>
+                                            </div>
+                                            {summaryLoading ? (
+                                                <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Generating a concise summary...</p>
+                                            ) : summaryError ? (
+                                                <p className="text-sm font-bold text-red-500">{summaryError}</p>
+                                            ) : (
+                                                <div className="whitespace-pre-wrap text-sm font-medium leading-7 text-slate-600 dark:text-slate-300">
+                                                    {summary}
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
                                     
                                     <div className="pt-6 border-t border-slate-100 dark:border-white/5">
                                         <h4 className="flex items-center gap-2 text-xs font-black text-slate-800 dark:text-white uppercase tracking-widest mb-4">
@@ -471,6 +889,23 @@ const VideoPlayer = () => {
                                     {chatMessages.map(msg => (
                                         <ChatBubble key={msg.id} message={msg} isOwn={msg.isOwn} />
                                     ))}
+                                    {followUpSuggestions.length > 0 && (
+                                        <div className="pt-2">
+                                            <p className="mb-2 text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">Suggested questions</p>
+                                            <div className="flex flex-wrap gap-2">
+                                                {followUpSuggestions.map((suggestion) => (
+                                                    <button
+                                                        key={suggestion}
+                                                        type="button"
+                                                        onClick={() => handleSuggestionClick(suggestion)}
+                                                        className="rounded-full border border-teal-100 bg-teal-50 px-3 py-1.5 text-left text-[11px] font-bold text-[#0D9488] transition-colors hover:bg-[#0D9488] hover:text-white dark:border-teal-500/20 dark:bg-teal-500/10 dark:text-teal-300"
+                                                    >
+                                                        {suggestion}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
                                     <div ref={chatEndRef} />
                                 </div>
 
@@ -487,10 +922,16 @@ const VideoPlayer = () => {
                                         />
                                         <button 
                                             onClick={handleSendMessage}
-                                            disabled={!chatInput.trim()}
+                                            disabled={!chatInput.trim() || isChatLoading}
                                             className="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 rounded-2xl bg-[#0D9488] text-white flex items-center justify-center shadow-lg shadow-teal-500/20 hover:bg-teal-600 disabled:opacity-30 disabled:shadow-none transition-all"
                                         >
-                                            <Send size={18} />
+                                            {isChatLoading ? (
+                                                <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}>
+                                                    <Sparkles size={18} />
+                                                </motion.div>
+                                            ) : (
+                                                <Send size={18} />
+                                            )}
                                         </button>
                                     </div>
                                 </div>

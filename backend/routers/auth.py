@@ -11,14 +11,14 @@ from datetime import datetime, timedelta, timezone
 
 import bcrypt
 from bson import ObjectId
-from dotenv import load_dotenv
 from fastapi import APIRouter, HTTPException, status
 from jose import jwt
 
 from database import get_db
+from env_config import load_backend_env
 from models import AuthResponse, LoginRequest, SignupRequest, UserPublic
 
-load_dotenv()
+load_backend_env()
 
 router = APIRouter(prefix="/api/auth", tags=["Auth"])
 
