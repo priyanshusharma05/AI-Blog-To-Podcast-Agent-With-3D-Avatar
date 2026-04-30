@@ -8,6 +8,7 @@ Swagger docs available at: http://127.0.0.1:8000/docs
 MongoDB Compass: connect using your Atlas Connection String
 """
 
+import os
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
@@ -43,6 +44,7 @@ app.add_middleware(
         "http://localhost:5173",
         "http://127.0.0.1:5173",
         "http://localhost:3000",
+        os.getenv("FRONTEND_URL", "https://your-frontend.vercel.app")
     ],
     allow_credentials=True,
     allow_methods=["*"],

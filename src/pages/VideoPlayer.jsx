@@ -9,7 +9,7 @@ import {
     Sparkles, Info, FileText
 } from 'lucide-react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { authFetch } from '../utils/authFetch';
+import { authFetch, apiFetch } from '../utils/authFetch';
 
 /* ─── Sidebar link (shared style) ───────────────── */
 const SideLink = ({ icon: Icon, label, active, onClick }) => (
@@ -226,7 +226,7 @@ const VideoPlayer = () => {
         if (audioReady || !episode) return;
         const interval = setInterval(async () => {
             try {
-                const res = await fetch(`/api/audio/${id}/status`);
+                const res = await apiFetch(`/api/audio/${id}/status`);
                 const data = await res.json();
                 if (data.status === 'ready' && data.audio_url) {
                     setAudioUrl(data.audio_url);

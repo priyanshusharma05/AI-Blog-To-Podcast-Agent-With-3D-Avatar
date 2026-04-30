@@ -6,6 +6,7 @@ import AuthLayout from '../components/layout/AuthLayout';
 import AuthCard from '../components/auth/AuthCard';
 import Input from '../components/ui/Input';
 import Button from '../components/ui/Button';
+import { apiFetch } from '../utils/authFetch';
 
 const Login = () => {
     const [loading, setLoading] = useState(false);
@@ -38,7 +39,7 @@ const Login = () => {
         setErrors({});
         setLoading(true);
         try {
-            const res = await fetch('/api/auth/login', {
+            const res = await apiFetch('/api/auth/login', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
