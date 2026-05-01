@@ -238,15 +238,27 @@ const VideoPlayer = () => {
         return () => clearInterval(interval);
     }, [audioReady, episode, id]);
 
+    // ── Track whether the audio element can actually play ──────────────────
+    const [canPlay, setCanPlay] = useState(false);
+
     // ── HTML5 Audio event handlers ───────────────────────────────────────────
     useEffect(() => {
         const audio = audioRef.current;
         if (!audio || !audioUrl) return;
 
-        audio.src = audioUrl.startsWith('http') ? audioUrl : `${API_URL}${audioUrl}`;
+        const fullSrc = audioUrl.startsWith('http') ? audioUrl : `${API_URL}${audioUrl}`;
+        console.log('[Audio] Setting src:', fullSrc);
+        audio.src = fullSrc;
         audio.volume = isMuted ? 0 : volume / 100;
+        audio.crossOrigin = 'anonymous';
+        setCanPlay(false);
 
+        const onCanPlay = () => {
+            console.log('[Audio] ✅ canplaythrough — audio is ready to play');
+            setCanPlay(true);
+        };
         const onLoadedMetadata = () => {
+            console.log('[Audio] loadedmetadata — duration:', audio.duration);
             setAudioDuration(audio.duration || 0);
         };
         const onTimeUpdate = () => {
@@ -259,22 +271,44 @@ const VideoPlayer = () => {
             setIsPlaying(false);
             setProgress(100);
         };
-        const onError = () => {
-            console.warn("Audio file could not be loaded (may be missing/deleted). Falling back to TTS.");
+        const onError = (e) => {
+            const code = audio?.error?.code;
+            const msg = audio?.error?.message || 'unknown';
+            console.error(`[Audio] ❌ Load error — code: ${code}, message: ${msg}, src: ${fullSrc}`);
             setAudioReady(false);
-            setAudioUrl(''); // Clear invalid URL
+            setAudioUrl('');
+            setCanPlay(false);
         };
+        const onStalled = () => console.warn('[Audio] ⏳ stalled — network may be slow or backend sleeping');
+        const onWaiting = () => console.log('[Audio] ⏳ waiting for data...');
 
+        audio.addEventListener('canplaythrough', onCanPlay);
         audio.addEventListener('loadedmetadata', onLoadedMetadata);
         audio.addEventListener('timeupdate', onTimeUpdate);
         audio.addEventListener('ended', onEnded);
         audio.addEventListener('error', onError);
+        audio.addEventListener('stalled', onStalled);
+        audio.addEventListener('waiting', onWaiting);
+
+        // Timeout: if audio doesn't become playable in 15s, fall back to TTS
+        const timeout = setTimeout(() => {
+            if (!audio.readyState || audio.readyState < 3) {
+                console.warn('[Audio] ⏰ Timeout — audio not playable after 15s. Falling back to TTS.');
+                setAudioReady(false);
+                setAudioUrl('');
+                setCanPlay(false);
+            }
+        }, 15000);
 
         return () => {
+            clearTimeout(timeout);
+            audio.removeEventListener('canplaythrough', onCanPlay);
             audio.removeEventListener('loadedmetadata', onLoadedMetadata);
             audio.removeEventListener('timeupdate', onTimeUpdate);
             audio.removeEventListener('ended', onEnded);
             audio.removeEventListener('error', onError);
+            audio.removeEventListener('stalled', onStalled);
+            audio.removeEventListener('waiting', onWaiting);
         };
     }, [audioUrl]);
 
@@ -290,11 +324,14 @@ const VideoPlayer = () => {
         const audio = audioRef.current;
         if (!audio || !audioReady) return;
         if (isPlaying) {
-            audio.play().catch(() => {});
+            console.log('[Audio] ▶ play() called — canPlay:', canPlay, 'readyState:', audio.readyState, 'src:', audio.src);
+            audio.play().catch((err) => {
+                console.error('[Audio] ▶ play() failed:', err.message);
+            });
         } else {
             audio.pause();
         }
-    }, [isPlaying, audioReady]);
+    }, [isPlaying, audioReady, canPlay]);
 
     // ── TTS Fallback (browser SpeechSynthesis) if no MP3 yet ────────────────
     const [ttsVoice, setTtsVoice] = useState(null);
