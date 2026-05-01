@@ -9,7 +9,7 @@ import {
     Sparkles, Info, FileText
 } from 'lucide-react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { authFetch, apiFetch } from '../utils/authFetch';
+import { authFetch, apiFetch, API_URL } from '../utils/authFetch';
 
 /* ─── Sidebar link (shared style) ───────────────── */
 const SideLink = ({ icon: Icon, label, active, onClick }) => (
@@ -243,7 +243,7 @@ const VideoPlayer = () => {
         const audio = audioRef.current;
         if (!audio || !audioUrl) return;
 
-        audio.src = audioUrl;
+        audio.src = audioUrl.startsWith('http') ? audioUrl : `${API_URL}${audioUrl}`;
         audio.volume = isMuted ? 0 : volume / 100;
 
         const onLoadedMetadata = () => {
@@ -259,15 +259,22 @@ const VideoPlayer = () => {
             setIsPlaying(false);
             setProgress(100);
         };
+        const onError = () => {
+            console.warn("Audio file could not be loaded (may be missing/deleted). Falling back to TTS.");
+            setAudioReady(false);
+            setAudioUrl(''); // Clear invalid URL
+        };
 
         audio.addEventListener('loadedmetadata', onLoadedMetadata);
         audio.addEventListener('timeupdate', onTimeUpdate);
         audio.addEventListener('ended', onEnded);
+        audio.addEventListener('error', onError);
 
         return () => {
             audio.removeEventListener('loadedmetadata', onLoadedMetadata);
             audio.removeEventListener('timeupdate', onTimeUpdate);
             audio.removeEventListener('ended', onEnded);
+            audio.removeEventListener('error', onError);
         };
     }, [audioUrl]);
 

@@ -1,6 +1,6 @@
 // In production, VITE_API_URL points to the Render backend (e.g. https://your-app.onrender.com)
 // In dev, it's empty so the Vite proxy handles /api/* requests.
-const API_URL = import.meta.env.VITE_API_URL || '';
+export const API_URL = import.meta.env.VITE_API_URL || '';
 
 export const getAuthHeaders = (headers = {}) => {
     const token = localStorage.getItem('vc_token');
